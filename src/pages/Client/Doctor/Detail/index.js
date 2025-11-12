@@ -2,44 +2,41 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import DoctorSchedule from "../Schedule";
 import Goback from "../../../../components/GoBack/index"
+import { getDoctorBySlug } from "../../../../services/homeService";
 
 function DoctorDetail() {
     const { slug } = useParams();
+    console.log(slug)
     const navigate = useNavigate();
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        // Sửa lỗi: không cần khai báo lại slug
         if (!slug) {
             setError("Không có thông tin bác sĩ");
             setLoading(false);
             return;
         }
 
-        fetch(`http://localhost:3000/doctors/${slug}`)
-            .then(res => {
-                if (!res.ok) {
-                    throw new Error(`HTTP error! status: ${res.status}`);
-                }
-                return res.json();
-            })
-            .then(response => {
+        const fetchDoctor = async () => {
+            try {
+                const response = await getDoctorBySlug(slug); 
                 console.log("API Response:", response);
                 if (response.success) {
                     setData(response.data);
                 } else {
                     setError("Không thể tải thông tin bác sĩ");
                 }
-            })
-            .catch(error => {
-                console.error("Fetch error:", error);
+            } catch (err) {
+                console.error("Fetch error:", err);
                 setError("Không thể kết nối đến server");
-            })
-            .finally(() => {
+            } finally {
                 setLoading(false);
-            });
+            }
+        };
+
+        fetchDoctor();
     }, [slug]);
 
     const handleBookAppointment = () => {

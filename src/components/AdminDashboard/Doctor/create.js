@@ -9,7 +9,7 @@ function DoctorCreate() {
     const [formData, setFormData] = useState({
         email: "",
         password: "",
-        licenceNumber: "",
+        licenseNumber: "",
         experience: "",
         name: "",
         consultationFee: "",
@@ -109,9 +109,9 @@ function DoctorCreate() {
                     <label>Giấy phép hành nghề</label>
                     <input
                         type="text"
-                        name="licenceNumber"
+                        name="licenseNumber"
                         className="form-control"
-                        value={formData.licenceNumber}
+                        value={formData.licenseNumber}
                         onChange={handleChange}
                     />
                 </div>

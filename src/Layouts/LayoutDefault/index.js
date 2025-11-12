@@ -5,42 +5,10 @@ import { useSelector } from "react-redux";
 import { useEffect } from "react";
 
 function LayoutDefault() {
-    const token = Cookies.get("token");
-    const isLogin = useSelector(state => state.loginReducer);
-    const profile = Cookies.get("profile");
+    const token = Cookies.get("tokenUser");
+    const profile = Cookies.get("profileUser");
     const profileObj = profile ? JSON.parse(profile) : null;
-    console.log(profileObj);
     const navigate = useNavigate();
-
-    // useEffect(() => {
-    //     const checkProfile = async () => {
-    //         if (!token) return;
-
-    //         try {
-    //             const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/patient/profile`, {
-    //                 headers: { Authorization: `Bearer ${token}` }
-    //             });
-    //             const data = await res.json();
-
-    //             if (
-    //                 data?.success &&
-    //                 data.result &&
-    //                 data.result.firstName === "Chưa cập nhật" &&
-    //                 data.result.lastName === "" &&
-    //                 data.result.phoneNumber === "" &&
-    //                 data.result.dateOfBitth === null,
-    //                 data.result.gender === '' &&
-    //                 data.result.address === '' 
-    //             ) {
-    //                 navigate("/profile/edit");
-    //             }
-    //         } catch (err) {
-    //             console.error("Lỗi kiểm tra hồ sơ:", err);
-    //         }
-    //     };
-
-    //     checkProfile();
-    // }, [token, navigate]);
 
     return (
         <div className="layout-default">
@@ -66,23 +34,23 @@ function LayoutDefault() {
                                 <Link to="/home">Bác sĩ</Link>
                             </li>
                             <li className="header__menu-item">
-                                <Link to="/clinic">Bệnh nhân</Link>
+                                <Link to="/family-doctors">Bác sĩ gia đình</Link>
                             </li>
                             <li className="header__menu-item">
-                                <Link to="/health">Blog</Link>
+                                <Link to="/health">Phòng khám</Link>
                             </li>
                             <li className="header__menu-item">
-                                <Link to="/admin">Admin</Link>
+                                <Link to="/admin">Chuyên khoa</Link>
                             </li>
                         </ul>
                     </div>
                     <div className="header__auth d-flex align-items-center">
                         <div className="header__auth d-flex align-items-center">
-                            {token ?
+                            {profileObj ?
                                 (
                                     <div className="header__logout">
                                         <Link to="/logout">Đăng xuất</Link>
-                                        <Link to="/profile">Profile</Link>
+                                        <Link to="/user-profile">Profile</Link>
                                     </div>
                                 ) :
                                 (

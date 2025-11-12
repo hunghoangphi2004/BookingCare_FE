@@ -61,7 +61,7 @@ function DoctorDetail() {
         if (!slug) return;
         const fetchDoctor = async () => {
             try {
-                const res = await fetch(`http://localhost:3000/doctors/${slug}`);
+                const res = await fetch(`http://localhost:3000/home/get-doctor-by-slug/${slug}`);
                 const data = await res.json();
                 if (data.success && data.data) {
                     setDoctor(data.data);
@@ -88,10 +88,11 @@ function DoctorDetail() {
                 const formattedDate = moment(date).format("DD-MM-YYYY");
 
                 const res = await fetch(
-                    `http://localhost:3000/schedule/doctor/${slug}/date/${formattedDate}`
+                    `http://localhost:3000/schedules/${slug}/date/${formattedDate}`
                 );
-                const data = await res.json();
 
+                const data = await res.json();
+                console.log(data)
                 if (data.success && Array.isArray(data.schedules)) {
                     setSchedule(data.schedules);
                 } else {
@@ -117,8 +118,8 @@ function DoctorDetail() {
     const handleSubmitBooking = async (e) => {
         e.preventDefault();
 
-        const token = Cookies.get("token");
-        if (!token) {
+        const profileUser = Cookies.get("profileUser");
+        if (!profileUser) {
             alert("Bạn cần đăng nhập để đặt lịch.");
             return navigate("/login");
         }
@@ -131,21 +132,22 @@ function DoctorDetail() {
         };
 
         try {
-            const res = await fetch("http://localhost:3000/appointment/create", {
+            const res = await fetch("http://localhost:3000/appointments/create", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
                 },
+                credentials: "include", 
                 body: JSON.stringify(payload),
             });
+
 
             const data = await res.json();
 
             if (data.success) {
                 alert("✅ Đặt lịch thành công!");
                 setShowModal(false);
-              
+
             } else {
                 alert("❌ " + (data.message || "Đặt lịch thất bại"));
             }

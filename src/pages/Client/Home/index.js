@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getHomePage } from "../../../services/homeService";
+import { getAllClinic, getAllSpecialization, getAllDoctor } from "../../../services/homeService";
 import { useNavigate } from "react-router-dom";
 import './home.scss'
 
@@ -16,9 +16,18 @@ function Home() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const result = await getHomePage();
-                setDataHomePage(result);
-                console.log("Home page data:", result);
+                const [clinicsRes, specializationsRes, doctorsRes] = await Promise.all([
+                    getAllClinic(),
+                    getAllSpecialization(),
+                    getAllDoctor()
+                ]);
+
+                setDataHomePage(prev => ({
+                    ...prev,
+                    clinics: clinicsRes.success ? clinicsRes.data : [],
+                    specializations: specializationsRes.success ? specializationsRes.data : [],
+                    doctors: doctorsRes.success ? doctorsRes.data : []
+                }));
             } catch (error) {
                 console.error("Error fetching home page data:", error);
             } finally {
@@ -26,8 +35,12 @@ function Home() {
             }
         };
 
+
         fetchData();
     }, []);
+
+    console.log(dataHomePage)
+
 
     if (loading) {
         return <div className="loading">Đang tải...</div>;

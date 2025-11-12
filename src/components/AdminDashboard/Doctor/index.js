@@ -1,57 +1,79 @@
 import { useEffect, useState } from "react";
-import { getAllDoctor } from "../../../services/doctorService";
+import { deleteDoctor, getAllDoctor } from "../../../services/doctorService";
 import { getAllSpec } from "../../../services/specializationService";
+import { getAllClinic } from "../../../services/clinicService";
 import { useNavigate } from "react-router-dom";
 
 function Doctors() {
+
   const [doctors, setDoctors] = useState([]);
   const [pagination, setPagination] = useState({});
-  const [filters, setFilters] = useState({ page: 1, limit: 10 });
+  const [filters, setFilters] = useState({ page: 1, limit: 5 });
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const [specializations, setSpecializations] = useState([]);
+  const [clinics, setClinics] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchSpecializations = async () => {
       try {
         const res = await getAllSpec();
+        console.log(res)
         if (res.success) setSpecializations(res.data);
-        else setError(res.message || "Không lấy được dữ liệu chuyên khoa");
+        else console.log(res.message);
       } catch (err) {
-        console.error(err);
-        setError("Có lỗi xảy ra khi lấy dữ liệu chuyên khoa");
+        console.log(err);
+      }
+    };
+    const fetchClinics = async () => {
+      try {
+        const res = await getAllClinic();
+        console.log(res)
+        if (res.success) setClinics(res.data);
+        else console.log(res.message);
+      } catch (err) {
+        console.log(err);
       }
     };
     fetchSpecializations();
+    fetchClinics();
   }, []);
 
-  useEffect(() => {
-    const fetchDoctors = async () => {
-      try {
-        setLoading(true);
-        const res = await getAllDoctor(filters);
-        if (res.success) {
-          setDoctors(res.data);
-          setPagination(res.pagination);
-        } else {
-          setError(res.message || "Không lấy được dữ liệu bác sĩ");
-        }
-      } catch (err) {
-        console.error(err);
-        setError("Có lỗi xảy ra khi lấy dữ liệu bác sĩ");
-      } finally {
-        setLoading(false);
+  const fetchDoctors = async (params = filters) => {
+    try {
+      setLoading(true);
+      const res = await getAllDoctor(params);
+      if (res.success) {
+        setDoctors(res.data);
+        setPagination(res.pagination);
+      } else {
+        console.error(res.message);
       }
-    };
-    fetchDoctors();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDoctors(filters);
   }, [filters]);
 
-  const handleFilterChange = (e) => {
+  const handleSpecChange = (e) => {
     const specializationId = e.target.value;
     setFilters((prev) => ({
       ...prev,
       specializationId,
+      page: 1
+    }));
+  };
+
+  const handleClinicChange = (e) => {
+    const clinicId = e.target.value;
+    setFilters((prev) => ({
+      ...prev,
+      clinicId,
       page: 1
     }));
   };
@@ -63,8 +85,28 @@ function Doctors() {
     }));
   };
 
+  const handleDelete = async (id) => {
+    if (window.confirm("Bạn có chắc muốn xóa bác sĩ này không?")) {
+      const res = await deleteDoctor(id);
+      if (res.success) {
+        alert("Xóa thành công!");
+
+        const newTotal = (pagination.total || 0) - 1;
+        const totalPages = Math.ceil(newTotal / (filters.limit || 5));
+        if (filters.page > totalPages && totalPages > 0) {
+          setFilters((prev) => ({ ...prev, page: totalPages }));
+        } else {
+          fetchDoctors(filters);
+        }
+
+      } else {
+        alert("Lỗi khi xóa!");
+      }
+    }
+  };
+
+
   if (loading) return <p>Đang tải dữ liệu...</p>;
-  if (error) return <div className="alert alert-danger">{error}</div>;
 
   return (
     <div>
@@ -79,20 +121,37 @@ function Doctors() {
       </div>
 
 
-      <p>Chuyên khoa</p>
-      <select
-        onChange={handleFilterChange}
-        value={filters.specializationId || ""}
-        className="form-select"
-        style={{ display: "block", width: "auto" }}
-      >
-        <option value="">Tất cả</option>
-        {specializations.map((spec) => (
-          <option key={spec._id} value={spec._id}>
-            {spec.name}
-          </option>
-        ))}
-      </select>
+      <div className="d-flex align-items-center">
+        <span>Chuyên khoa</span>
+        <select
+          onChange={handleSpecChange}
+          value={filters.specializationId || ""}
+          className="form-select"
+          style={{ display: "block", width: "auto", marginRight: "50px" }}
+        >
+          <option value="">Tất cả</option>
+          {specializations.map((spec) => (
+            <option key={spec._id} value={spec._id}>
+              {spec.name}
+            </option>
+          ))}
+        </select>
+
+        <span>Phòng khám</span>
+        <select
+          onChange={handleClinicChange}
+          value={filters.clinicId || ""}
+          className="form-select"
+          style={{ display: "block", width: "auto" }}
+        >
+          <option value="">Tất cả</option>
+          {clinics.map((clinic) => (
+            <option key={clinic._id} value={clinic._id}>
+              {clinic.name}
+            </option>
+          ))}
+        </select>
+      </div>
 
 
 
@@ -103,6 +162,7 @@ function Doctors() {
             <th>Hình ảnh</th>
             <th>Bác sĩ</th>
             <th>Email</th>
+            <th>Slug</th>
             <th>Chuyên khoa</th>
             <th>Phòng khám</th>
             <th>SĐT</th>
@@ -122,12 +182,13 @@ function Doctors() {
               </td>
               <td>{a.name}</td>
               <td>{a.userId?.email}</td>
+              <td>{a.slug}</td>
               <td>{a.specializationId?.name}</td>
               <td>{a.clinicId?.name}</td>
               <td>{a.phoneNumber}</td>
               <td>
-                <button className="btn btn-success btn-sm me-2">Xoá</button>
-                <button className="btn btn-danger btn-sm">Sửa</button>
+                  <button className="btn btn-success btn-sm me-2" onClick={() => navigate(`/admin/doctors/edit/${a._id}`)}>Sửa</button>
+                <button className="btn btn-danger btn-sm" onClick={() => handleDelete(a._id)}>Xoá</button>
               </td>
             </tr>
           ))}

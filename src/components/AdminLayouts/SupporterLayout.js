@@ -17,7 +17,7 @@ function SupporterLayout() {
             </Link>
           </li>
           <li className="nav-item mb-2">
-            <Link to="/admin/supporter/tickets" className="nav-link text-white">
+            <Link to="/admin/supporter/appointments" className="nav-link text-white">
               Quản lý lịch đặt
             </Link>
           </li>

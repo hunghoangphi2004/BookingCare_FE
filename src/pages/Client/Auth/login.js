@@ -31,13 +31,9 @@ function Login() {
         try {
             const data = await login(userFormData);
             if (data.success === true) {
-                Cookies.set("token", data.token);
-                Cookies.set("profile", JSON.stringify(data.result));
+                Cookies.set("tokenUser", data.result.token);
+                Cookies.set("profileUser", JSON.stringify(data.result));
                 dispatch(checkLogin(true));
-
-                const profileCookie = Cookies.get("profile");
-                console.log("📦 Profile cookie:", JSON.parse(profileCookie))
-
                 navigate("/");
             } else {
                 setError("Sai thông tin đăng nhập. Vui lòng kiểm tra lại email và mật khẩu.");

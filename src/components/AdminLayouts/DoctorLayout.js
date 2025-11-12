@@ -9,26 +9,31 @@ function DoctorLayout() {
     <div className="d-flex vh-100">
       {/* Sidebar */}
       <nav className="bg-dark text-white p-3" style={{ width: "250px" }}>
-        <h3 className="mb-4">Doctor Panel</h3>
+        <h3 className="mb-4">Trang bác sĩ</h3>
         <ul className="nav flex-column">
           <li className="nav-item mb-2">
-            <Link to="/admin/doctor/dashboard" className="nav-link text-white">
-              Dashboard
+            <Link to="/admin/doctor/schedules" className="nav-link text-white">
+              Quản lý kế hoạch khám bệnh
             </Link>
           </li>
           <li className="nav-item mb-2">
-            <Link to="/admin/doctor/patients" className="nav-link text-white">
-              Quản lý Patients
+            <Link to="/admin/doctor/request-family-doctor" className="nav-link text-white">
+              Quản lý Yêu cầu Bác sĩ gia đình
             </Link>
           </li>
-          <li className="nav-item mb-2">
-            <Link to="/admin/doctor/schedule" className="nav-link text-white">
-              Lịch khám
+           <li className="nav-item mb-2">
+            <Link to="/admin/doctor/family" className="nav-link text-white">
+              Quản lý gia đình
             </Link>
           </li>
           <li className="nav-item mb-2">
             <Link to="/admin/doctor/appointments" className="nav-link text-white">
               Lịch hẹn
+            </Link>
+          </li>
+           <li className="nav-item mb-2">
+            <Link to="/admin/doctor/my-prescriptions" className="nav-link text-white">
+              Quản lý toa thuốc
             </Link>
           </li>
         </ul>

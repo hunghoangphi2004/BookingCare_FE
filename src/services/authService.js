@@ -1,8 +1,26 @@
-import { post,get  } from "../utils/request";
+import { post,get, getWithTokenUser, getInclude  } from "../utils/request";
+
+export const loginAdmin = async (payload) => {
+  try {
+    return await post("/admin/auth/login", payload);
+  } catch (error) {
+    console.error("Login error:", error);
+    throw error;
+  }
+};
 
 export const login = async (payload) => {
   try {
     return await post("/auth/login", payload);
+  } catch (error) {
+    console.error("Login error:", error);
+    throw error;
+  }
+};
+
+export const logoutAdmin = async (payload) => {
+  try {
+    return await get("/admin/auth/logout");
   } catch (error) {
     console.error("Login error:", error);
     throw error;
@@ -33,3 +51,23 @@ export const getAllUser = async (params = {}) => {
   const result = await get(url);
   return result;
 }
+
+export const getProfile = async () => {
+  try {
+    const result = await getInclude("/auth/profile");
+    return result;
+  } catch (error) {
+    console.error("Get profile error:", error);
+    throw error;
+  }
+};
+
+export const getProfileAdmin= async () => {
+  try {
+    const result = await getInclude("/admin/auth/get-profile");
+    return result;
+  } catch (error) {
+    console.error("Get profile error:", error);
+    throw error;
+  }
+};

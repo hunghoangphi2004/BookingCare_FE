@@ -1,17 +1,18 @@
 // components/AdminLayouts/AdminLayout.jsx
 import { Outlet, Link } from "react-router-dom";
 import Cookies from "js-cookie";
+import { logoutAdmin } from "../../services/authService";
 
 function AdminLayout() {
   const profile = Cookies.get("profile") ? JSON.parse(Cookies.get("profile")) : null;
-  console.log(profile)
+  // console.log(profile)
 
 
   return (
     <div className="d-flex vh-100">
       {/* Sidebar */}
       <nav className="bg-dark text-white p-3" style={{ width: "250px" }}>
-        <h3 className="mb-4">Admin Panel</h3>
+        <h3 className="mb-4">Trang quản trị viên</h3>
         <ul className="nav flex-column">
           <li className="nav-item mb-2">
             <Link to="/admin/schedules" className="nav-link text-white">
@@ -34,10 +35,31 @@ function AdminLayout() {
             </Link>
           </li>
           <li className="nav-item mb-2">
-            <Link to="/admin/users" className="nav-link text-white">
-              Quản lý tài khoản
+            <Link to="/admin/patients" className="nav-link text-white">
+              Quản lý bệnh nhân
             </Link>
           </li>
+          <li className="nav-item mb-2">
+            <Link to="/admin/supporters" className="nav-link text-white">
+              Quản lý hỗ trợ viên
+            </Link>
+          </li>
+          <li className="nav-item mb-2">
+            <Link to="/admin/medicines" className="nav-link text-white">
+              Quản lý thuốc
+            </Link>
+          </li>
+          <li className="nav-item mb-2">
+            <Link to="/admin/prescriptions" className="nav-link text-white">
+              Quản lý toa thuốc
+            </Link>
+          </li>
+          <li className="nav-item mb-2">
+            <Link to="/admin/families" className="nav-link text-white">
+              Quản lý gia đình
+            </Link>
+          </li>
+
         </ul>
       </nav>
 
@@ -45,13 +67,24 @@ function AdminLayout() {
       <div className="flex-fill d-flex flex-column">
         {/* Header */}
         <header className="bg-light p-3 border-bottom d-flex justify-content-between align-items-center">
-          <h4>Welcome, {profile.role=="admin"?<>admin</>:""}</h4>
+          <h4>Welcome, {profile.role == "admin" ? <>admin</> : ""}</h4>
           <button
             className="btn btn-outline-danger btn-sm"
-            onClick={() => {
-              Cookies.remove("token");
-              Cookies.remove("profile");
-              window.location.href = "/admin/login";
+            onClick={async () => {
+              try {
+                // Gọi API logout
+                await logoutAdmin();
+
+                // Xóa cookie
+                Cookies.remove("token");
+                Cookies.remove("profile");
+
+                // Chuyển về trang login
+                window.location.href = "/admin/login";
+              } catch (err) {
+                console.error("Lỗi khi logout:", err);
+                alert("Logout thất bại, vui lòng thử lại!");
+              }
             }}
           >
             Logout

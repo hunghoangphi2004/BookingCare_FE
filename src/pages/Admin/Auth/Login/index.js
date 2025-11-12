@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { login } from "../../../../services/authService";
+import { loginAdmin } from "../../../../services/authService";
 import Cookies from "js-cookie";
 import { checkLogin } from "../../../../actions/login";
 
@@ -28,19 +28,17 @@ function AdminLogin() {
         setError("");
 
         try {
-            const data = await login(userFormData);
+            const data = await loginAdmin(userFormData);
             if (data.success === true) {
-                Cookies.set("token", data.token);
+                Cookies.set("token", data.result.token);
                 Cookies.set("refreshToken", data.refreshToken);
                 Cookies.set("profile", JSON.stringify(data.result));
                 dispatch(checkLogin(true));
-
-                // Navigate dựa vào role
                 const role = data.result.role;
                 console.log(role)
                 if (role == "admin") navigate("/admin");
                 else if (role == "supporter") navigate("/admin/supporter");
-                else if (role == "doctor") navigate("/admin/doctor-dashboard");
+                else if (role == "doctor") navigate("/admin/doctor");
                 else navigate("/"); 
             }
         } catch (err) {

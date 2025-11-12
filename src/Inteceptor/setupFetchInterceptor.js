@@ -1,65 +1,61 @@
 import Cookies from "js-cookie";
 
-const API_DOMAIN = "http://localhost:3000";
-
 export function setupFetchInterceptor() {
   const originalFetch = window.fetch;
 
-  window.fetch = async (url, options = {}) => {
+  window.fetch = async (input, init = {}) => {
     const token = Cookies.get("token");
 
-    // Gắn token vào tất cả request
-    const headers = {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      ...(options.headers || {}),
-      ...(token && { Authorization: `Bearer ${token}` }),
+    const isFormData = init.body instanceof FormData;
+
+    // 🔧 Luôn có headers, kể cả khi chưa đăng nhập
+    init.headers = {
+      ...init.headers,
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(isFormData ? {} : { "Content-Type": "application/json" }),
     };
 
-    let response = await originalFetch(url, { ...options, headers });
+    let response = await originalFetch(input, init);
 
-    // 🧠 Nếu token hết hạn (401)
-    if (response.status === 401 && !url.includes("/auth/refresh-token")) {
-      console.warn("⚠️ Token hết hạn → tự refresh...");
+    // ======= Xử lý token hết hạn =======
+    if (response.status === 401) {
+      const data = await response.clone().json().catch(() => ({}));
+      if (data.message === "TokenExpired") {
+        const refreshToken = Cookies.get("refreshToken");
+        if (!refreshToken) {
+          window.location.href = "/login";
+          return response;
+        }
 
-      const refreshToken = Cookies.get("refreshToken");
-      if (!refreshToken) {
-        console.error("❌ Không có refreshToken → đăng xuất");
-        Cookies.remove("token");
-        Cookies.remove("refreshToken");
-        window.location.href = "/login";
-        return response;
-      }
+        try {
+          const refreshResponse = await originalFetch(
+            "http://localhost:3000/auth/refresh-token",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ refreshToken }),
+            }
+          );
 
-      // 🌀 Gọi API refresh token
-      const refreshResponse = await originalFetch(`${API_DOMAIN}/auth/refresh-token`, {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ refreshToken }),
-      });
+          if (refreshResponse.ok) {
+            const refreshData = await refreshResponse.json();
+            Cookies.set("token", refreshData.accessToken, { expires: 1 });
 
-      const refreshData = await refreshResponse.json();
-
-      // ✅ Nếu refresh thành công
-      if (refreshResponse.ok && refreshData.success && refreshData.accessToken) {
-        Cookies.set("token", refreshData.accessToken);
-        console.log("🔁 Token mới đã được cập nhật, gọi lại request cũ");
-
-        // Gọi lại request cũ với token mới
-        const retryHeaders = {
-          ...headers,
-          Authorization: `Bearer ${refreshData.accessToken}`,
-        };
-
-        response = await originalFetch(url, { ...options, headers: retryHeaders });
-      } else {
-        console.error("❌ Refresh thất bại → đăng xuất");
-        Cookies.remove("token");
-        Cookies.remove("refreshToken");
-        window.location.href = "/login";
+            // Gửi lại request ban đầu
+            init.headers.Authorization = `Bearer ${refreshData.accessToken}`;
+            response = await originalFetch(input, init);
+          } else {
+            Cookies.remove("token");
+            Cookies.remove("refreshToken");
+            Cookies.remove("profile");
+            window.location.href = "/login";
+          }
+        } catch (error) {
+          console.error("Refresh token error:", error);
+          Cookies.remove("token");
+          Cookies.remove("refreshToken");
+          window.location.href = "/login";
+        }
       }
     }
 

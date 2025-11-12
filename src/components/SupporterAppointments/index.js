@@ -16,16 +16,18 @@ function SupporterAppointments() {
   const fetchAppointments = async () => {
     try {
       const res = await getAllAppointments();
+      console.log(res)
       if (res.success) {
         const appointmentsWithInfo = await Promise.all(
           res.data.map(async (a) => {
             const doctorRes = await getDoctorById(a.doctorId);
             const patientRes = await getPatientById(a.patientId);
+            console.log(patientRes)
             return {
               ...a,
               doctorName: doctorRes.success ? doctorRes.data.name : a.doctorId,
-              patientName: patientRes.success
-                ? `${patientRes.data.firstName} ${patientRes.data.lastName}`
+              patientName: patientRes.success && patientRes.data?.patient
+                ? `${patientRes.data.patient.firstName} ${patientRes.data.patient.lastName}`
                 : a.patientId,
             };
           })
@@ -95,7 +97,7 @@ function SupporterAppointments() {
                     </button>
                     <button
                       className="btn btn-danger btn-sm"
-                    //   onClick={() => handleUpdateStatus(a._id, "cancelled")}
+                      onClick={() => handleUpdateStatus(a._id, "cancelled")}
                     >
                       Hủy
                     </button>
