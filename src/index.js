@@ -9,8 +9,9 @@ import {thunk} from "redux-thunk";
 import allReducers from './reducers';
 import { Provider } from 'react-redux';
 import 'bootstrap/dist/css/bootstrap.min.css';
-
-
+import 'antd/dist/antd.css';
+import "./assets/styles/main.css";
+import "./assets/styles/responsive.css";
 
 const store = createStore(allReducers, applyMiddleware(thunk));
 

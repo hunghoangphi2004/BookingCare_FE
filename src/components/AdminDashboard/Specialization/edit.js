@@ -1,65 +1,65 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getSpecializationById,updateSpecialization } from "../../../services/specializationService";
+import { getSpecializationById, updateSpecialization } from "../../../services/specializationService";
+import { Form, Input, Button, Upload, Alert } from "antd";
+import { UploadOutlined } from "@ant-design/icons";
 
-function SpecializationEdit() {
+const SpecializationEdit = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const [form] = Form.useForm();
 
-    const [formData, setFormData] = useState({
-        name: "",
-        description: "",
-    });
-
-    const [image, setImage] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [image, setImage] = useState(null);
     const [oldSpecialization, setOldSpecialization] = useState(null);
+    const [alert, setAlert] = useState({ type: '', message: '' });
 
     useEffect(() => {
-        const fetchDataSpecialization = async () => {
+        const fetchData = async () => {
             try {
-                const specialization = await getSpecializationById(id);
-                if (specialization.data) {
-                    setOldSpecialization(specialization.data);
-                    setFormData({
-                        name: specialization.data.name || "",
-                        description: specialization.data.description || "",
+                const res = await getSpecializationById(id);
+                if (res.data) {
+                    setOldSpecialization(res.data);
+                    form.setFieldsValue({
+                        name: res.data.name || "",
+                        description: res.data.description || "",
                     });
                 }
-            } catch (error) {
-                console.error("Lỗi khi tải dữ liệu:", error);
+            } catch (err) {
+                console.error(err);
+                setAlert({ type: 'error', message: "Lỗi khi tải dữ liệu chuyên khoa." });
             }
         };
-        fetchDataSpecialization(id);
-    }, [id]);
+        fetchData();
+    }, [id, form]);
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
-    };
-
-    console.log(oldSpecialization)
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    const handleSubmit = async (values) => {
         setLoading(true);
+        try {
+            const formData = new FormData();
+            Object.entries(values).forEach(([key, value]) => formData.append(key, value));
+            if (image) formData.append("image", image);
 
-        const form = new FormData();
-        Object.entries(formData).forEach(([key, value]) => {
-            form.append(key, value);
-        });
-        if (image) form.append("image", image);
-
-        const res = await updateSpecialization(id, form);
-        setLoading(false);
-
-        console.log(form)
-
-        if (res.success) {
-            alert("Cập nhật chuyên khoa thành công!");
-            navigate("/admin/specializations");
-        } else {
-            alert(res.message || "Lỗi khi cập nhật chuyên khoa");
+            const res = await updateSpecialization(id, formData);
+            if (res.success) {
+                navigate("/admin/specializations", {
+                    state: {
+                        alert: {
+                            type: "success",
+                            message: "Chuyên khoa đã được cập nhật thành công!"
+                        }
+                    }
+                });
+            } else {
+                setAlert({ type: 'error', message: res.message || "Không thể cập nhật chuyên khoa!" });
+                setTimeout(() => setAlert({ type: '', message: '' }), 5000);
+            }
+        } catch (err) {
+            console.error(err);
+            setAlert({ type: 'error', message: "Đã xảy ra lỗi hệ thống. Vui lòng thử lại!" });
+            setTimeout(() => setAlert({ type: '', message: '' }), 5000);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -67,64 +67,70 @@ function SpecializationEdit() {
 
     return (
         <div className="container mt-4">
-            <h3>Cập nhật phòng khám</h3>
-            <form onSubmit={handleSubmit}>
-                <div className="mb-3">
-                    <label>Tên phòng khám</label>
-                    <input
-                        type="text"
-                        name="name"
-                        className="form-control"
-                        value={formData.name}
-                        onChange={handleChange}
-                        required
-                    />
-                </div>
+            <h3 className="mb-4">Cập nhật chuyên khoa</h3>
 
-                <div className="mb-3">
-                    <label>Mô tả</label>
-                    <textarea
-                        name="description"
-                        className="form-control"
-                        value={formData.description}
-                        onChange={handleChange}
-                    />
-                </div>
+            {alert.message && (
+                <Alert
+                    message={alert.message}
+                    type={alert.type}
+                    showIcon
+                    closable
+                    style={{ marginBottom: 16 }}
+                    onClose={() => setAlert({ type: '', message: '' })}
+                />
+            )}
 
-                {/* Ảnh */}
-                <div className="mb-3">
-                    <label>Ảnh phòng khám</label>
-                    <input
-                        type="file"
-                        accept="image/*"
-                        className="form-control"
-                        onChange={(e) => setImage(e.target.files[0])}
-                    />
+            <Form
+                form={form}
+                layout="vertical"
+                onFinish={handleSubmit}
+                style={{ maxWidth: 700 }}
+            >
+                <Form.Item
+                    label="Tên chuyên khoa"
+                    name="name"
+                    rules={[{ required: true, message: "Vui lòng nhập tên chuyên khoa!" }]}
+                >
+                    <Input placeholder="VD: Nội tổng quát" />
+                </Form.Item>
+
+                <Form.Item label="Mô tả" name="description">
+                    <Input.TextArea placeholder="Mô tả chuyên khoa..." rows={4} />
+                </Form.Item>
+
+                <Form.Item label="Hình ảnh">
+                    <Upload
+                        beforeUpload={(file) => { setImage(file); return false; }}
+                        showUploadList={false}
+                    >
+                        <Button icon={<UploadOutlined />}>Chọn ảnh</Button>
+                    </Upload>
                     {image ? (
                         <img
                             src={URL.createObjectURL(image)}
                             alt="preview"
-                            width="100"
-                            className="mt-2"
+                            style={{ width: 100, borderRadius: 8, marginTop: 10 }}
                         />
                     ) : (
                         oldSpecialization?.image && (
                             <img
                                 src={oldSpecialization.image}
                                 alt="old specialization"
-                                width="100"
-                                className="mt-2"
+                                style={{ width: 100, borderRadius: 8, marginTop: 10 }}
                             />
                         )
                     )}
-                </div>
+                </Form.Item>
 
-                <button type="submit" className="btn btn-primary" disabled={loading}>
-                    {loading ? "Đang cập nhật..." : "Cập nhật phòng khám"}
-                </button>
-            </form>
+                <Form.Item>
+                    <Button type="primary" htmlType="submit" loading={loading} style={{ marginRight: 8 }}>
+                        {loading ? "Đang cập nhật..." : "Cập nhật chuyên khoa"}
+                    </Button>
+                    <Button onClick={() => navigate("/admin/specializations")}>Hủy</Button>
+                </Form.Item>
+            </Form>
         </div>
     );
-}
+};
 
 export default SpecializationEdit;

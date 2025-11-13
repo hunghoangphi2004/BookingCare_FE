@@ -20,7 +20,7 @@ export const login = async (payload) => {
 
 export const logoutAdmin = async (payload) => {
   try {
-    return await get("/admin/auth/logout");
+    return await getInclude("/admin/auth/logout");
   } catch (error) {
     console.error("Login error:", error);
     throw error;

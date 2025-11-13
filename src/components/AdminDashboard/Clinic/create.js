@@ -1,134 +1,116 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createClinic } from "../../../services/clinicService";
+import { Form, Input, Button, Upload, Alert } from "antd";
+import { UploadOutlined } from "@ant-design/icons";
 
-function ClinicCreate() {
-    const [formData, setFormData] = useState({
-        name: "",
-        description: "",
-        address: "",
-        openingHours: "",
-        phone: "",
-    });
-    const [image, setImage] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const navigate = useNavigate();
+const ClinicCreate = () => {
+  const [form] = Form.useForm();
+  const [loading, setLoading] = useState(false);
+  const [image, setImage] = useState(null);
+  const [alert, setAlert] = useState({ type: '', message: '' });
+  const navigate = useNavigate();
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
-    };
+  const handleSubmit = async (values) => {
+    setLoading(true);
+    try {
+      const formData = new FormData();
+      Object.entries(values).forEach(([key, value]) => formData.append(key, value));
+      if (image) formData.append("image", image);
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-
-        try {
-            const form = new FormData();
-            Object.entries(formData).forEach(([key, value]) => {
-                form.append(key, value);
-            });
-            if (image) form.append("image", image);
-
-            const res = await createClinic(form);
-
-            if (res.success) {
-                alert("Tạo phòng khám thành công!");
-                navigate("/admin/clinics");
-            } else {
-                alert(res.message || "Lỗi khi tạo phòng khám");
+      const res = await createClinic(formData);
+      if (res.success) {
+        navigate("/admin/clinics", {
+          state: {
+            alert: {
+              type: "success",
+              message: "Phòng khám đã được tạo thành công!"
             }
-        } catch (err) {
-            console.error(err);
-            alert("Có lỗi khi tạo phòng khám");
-        } finally {
-            setLoading(false);
-        }
-    };
+          }
+        });
+      } else {
+        setAlert({ type: 'error', message: res.message || "Không thể tạo phòng khám!" });
+        setTimeout(() => setAlert({ type: '', message: '' }), 5000);
+      }
+    } catch (err) {
+      console.error(err);
+      setAlert({ type: 'error', message: "Đã xảy ra lỗi hệ thống. Vui lòng thử lại!" });
+      setTimeout(() => setAlert({ type: '', message: '' }), 5000);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    return (
-        <div className="container mt-4">
-            <h3>Thêm phòng khám</h3>
-            <form onSubmit={handleSubmit}>
-                <div className="mb-3">
-                    <label>Tên phòng khám</label>
-                    <input
-                        type="text"
-                        name="name"
-                        className="form-control"
-                        value={formData.name}
-                        onChange={handleChange}
-                        required
-                    />
-                </div>
+  return (
+    <div className="container mt-4">
+      <h3 className="mb-4">Thêm phòng khám</h3>
 
-                <div className="mb-3">
-                    <label>Mô tả</label>
-                    <textarea
-                        name="description"
-                        className="form-control"
-                        value={formData.description}
-                        onChange={handleChange}
-                    />
-                </div>
+      {alert.message && (
+        <Alert
+          message={alert.message}
+          type={alert.type}
+          showIcon
+          closable
+          style={{ marginBottom: 16 }}
+          onClose={() => setAlert({ type: '', message: '' })}
+        />
+      )}
 
-                <div className="mb-3">
-                    <label>Địa chỉ</label>
-                    <input
-                        type="text"
-                        name="address"
-                        className="form-control"
-                        value={formData.address}
-                        onChange={handleChange}
-                    />
-                </div>
+      <Form
+        form={form}
+        layout="vertical"
+        onFinish={handleSubmit}
+        style={{ maxWidth: 700 }}
+      >
+        <Form.Item
+          label="Tên phòng khám"
+          name="name"
+          rules={[{ required: true, message: "Vui lòng nhập tên phòng khám!" }]}
+        >
+          <Input placeholder="VD: Phòng khám ABC" />
+        </Form.Item>
 
-                <div className="mb-3">
-                    <label>Giờ làm việc</label>
-                    <input
-                        type="text"
-                        name="openingHours"
-                        className="form-control"
-                        value={formData.openingHours}
-                        onChange={handleChange}
-                    />
-                </div>
+        <Form.Item label="Mô tả" name="description">
+          <Input.TextArea placeholder="Mô tả phòng khám..." rows={4} />
+        </Form.Item>
 
-                <div className="mb-3">
-                    <label>Số điện thoại</label>
-                    <input
-                        type="text"
-                        name="phone"
-                        className="form-control"
-                        value={formData.phone}
-                        onChange={handleChange}
-                    />
-                </div>
+        <Form.Item label="Địa chỉ" name="address">
+          <Input placeholder="Địa chỉ phòng khám" />
+        </Form.Item>
 
-                <div className="mb-3">
-                    <label>Hình ảnh</label>
-                    <input
-                        type="file"
-                        accept="image/*"
-                        className="form-control"
-                        onChange={(e) => setImage(e.target.files[0])}
-                    />
-                    {image && (
-                        <img
-                            src={URL.createObjectURL(image)}
-                            alt="preview"
-                            width="100"
-                            className="mt-2"
-                        />
-                    )}
-                </div>
+        <Form.Item label="Giờ làm việc" name="openingHours">
+          <Input placeholder="VD: 8:00 - 17:00" />
+        </Form.Item>
 
-                <button type="submit" className="btn btn-primary" disabled={loading}>
-                    {loading ? "Đang tạo..." : "Tạo phòng khám"}
-                </button>
-            </form>
-        </div>
-    );
-}
+        <Form.Item label="Số điện thoại" name="phone">
+          <Input placeholder="SĐT liên hệ" />
+        </Form.Item>
+
+        <Form.Item label="Hình ảnh">
+          <Upload
+            beforeUpload={(file) => { setImage(file); return false; }}
+            showUploadList={false}
+          >
+            <Button icon={<UploadOutlined />}>Chọn ảnh</Button>
+          </Upload>
+          {image && (
+            <img
+              src={URL.createObjectURL(image)}
+              alt="preview"
+              style={{ width: 100, borderRadius: 8, marginTop: 10 }}
+            />
+          )}
+        </Form.Item>
+
+        <Form.Item>
+          <Button type="primary" htmlType="submit" loading={loading} style={{ marginRight: 8 }}>
+            {loading ? "Đang tạo..." : "Tạo phòng khám"}
+          </Button>
+          <Button onClick={() => navigate("/admin/clinics")}>Hủy</Button>
+        </Form.Item>
+      </Form>
+    </div>
+  );
+};
 
 export default ClinicCreate;

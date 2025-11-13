@@ -1,15 +1,28 @@
 import { useEffect, useState } from "react";
-import { getAllSpec } from "../../../services/specializationService";
-import { useNavigate } from "react-router-dom";
-import { deleteSpecialization } from "../../../services/specializationService";
+import { getAllSpec, deleteSpecialization } from "../../../services/specializationService";
+import { useNavigate, useLocation } from "react-router-dom";
+import { Table, Button, Space, Modal, Typography, Alert } from "antd";
 
 function Specializations() {
     const [specializations, setSpecializations] = useState([]);
     const [pagination, setPagination] = useState({});
     const [filters, setFilters] = useState({ page: 1, limit: 5 });
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
+    const [alert, setAlert] = useState({ type: '', message: '' });
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedSpecId, setSelectedSpecId] = useState(null);
+
     const navigate = useNavigate();
+    const location = useLocation();
+    const { Title } = Typography;
+
+    useEffect(() => {
+        if (location.state?.alert) {
+            setAlert(location.state.alert);
+            navigate(location.pathname, { replace: true });
+            setTimeout(() => setAlert({ type: '', message: '' }), 5000);
+        }
+    }, [location, navigate]);
 
     useEffect(() => {
         fetchSpecializations(filters);
@@ -19,114 +32,127 @@ function Specializations() {
         try {
             setLoading(true);
             const res = await getAllSpec(params);
-            console.log(res)
             if (res.success) {
                 setSpecializations(res.data);
                 setPagination(res.pagination);
             } else {
-                setError(res.message || "Không lấy được dữ liệu");
+                setAlert({ type: 'error', message: res.message || 'Không lấy được dữ liệu' });
             }
         } catch (err) {
             console.error(err);
-            setError("Có lỗi xảy ra khi lấy dữ liệu");
+            setAlert({ type: 'error', message: 'Có lỗi xảy ra khi lấy dữ liệu' });
         } finally {
             setLoading(false);
         }
     };
 
-    const handlePageChange = (newPage) => {
-        setFilters((prev) => ({
-            ...prev,
-            page: newPage
-        }));
+    const showDeleteModal = (id) => {
+        setSelectedSpecId(id);
+        setIsModalOpen(true);
     };
 
-    const handleDelete = async (id) => {
-        if (window.confirm("Bạn có chắc muốn xóa chuyên khoa này không?")) {
-            const res = await deleteSpecialization(id);
+    const handleOk = async () => {
+        try {
+            const res = await deleteSpecialization(selectedSpecId);
             if (res.success) {
-                alert("Xóa thành công!");
-
+                setAlert({ type: 'success', message: 'Xóa chuyên khoa thành công!' });
                 const newTotal = (pagination.total || 0) - 1;
                 const totalPages = Math.ceil(newTotal / (filters.limit || 5));
-                if (filters.page > totalPages && totalPages > 0) {
-                    setFilters((prev) => ({ ...prev, page: totalPages }));
-                } else {
-                    fetchSpecializations(filters);
-                }
-
+                const newPage = filters.page > totalPages ? totalPages : filters.page;
+                setFilters(prev => ({ ...prev, page: newPage }));
+                setTimeout(() => fetchSpecializations({ ...filters, page: newPage }), 200);
             } else {
-                alert("Lỗi khi xóa!");
+                setAlert({ type: 'error', message: res.message || 'Không thể xóa chuyên khoa' });
             }
+        } catch (err) {
+            setAlert({ type: 'error', message: 'Đã xảy ra lỗi hệ thống' });
+        } finally {
+            setIsModalOpen(false);
+            setSelectedSpecId(null);
+            setTimeout(() => setAlert({ type: '', message: '' }), 5000);
         }
     };
 
+    const handleCancel = () => {
+        setIsModalOpen(false);
+        setSelectedSpecId(null);
+    };
 
-    if (loading) return <p>Đang tải dữ liệu...</p>;
-    if (error) return <div className="alert alert-danger">{error}</div>;
+    const columns = [
+        {
+            title: '#',
+            render: (_, __, idx) => (filters.page - 1) * filters.limit + idx + 1,
+        },
+        {
+            title: 'Hình ảnh',
+            dataIndex: 'image',
+            render: src => <img src={src} alt="thumb" style={{ width: 80, height: 80, borderRadius: 8, objectFit: 'cover' }} />
+        },
+        { title: 'Tên', dataIndex: 'name' },
+        { title: 'Slug', dataIndex: 'slug' },
+        { title: 'Mô tả', dataIndex: 'description' },
+        {
+            title: 'Hành động',
+            render: record => (
+                <Space>
+                    <Button type="primary" size="small" onClick={() => navigate(`/admin/specializations/edit/${record._id}`)}>Sửa</Button>
+                    <Button danger size="small" onClick={() => showDeleteModal(record._id)}>Xoá</Button>
+                </Space>
+            )
+        }
+    ];
 
     return (
-        <div>
-            <h2 className="mb-5">Danh sách chuyên khoa ({pagination.total || 0})</h2>
-            <button
-                className="btn btn-primary"
-                onClick={() => navigate("/admin/specializations/create")}
-            >
-                + Thêm mới
-            </button>
-
-
-            <table className="table table-striped table-bordered mt-3">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Hình ảnh</th>
-                        <th>Tên</th>
-                        <th>Slug</th>
-                        <th>Mô tả</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {specializations.map((a, idx) => (
-                        <tr key={a._id}>
-                            <td>{(filters.page - 1) * (filters.limit || 10) + idx + 1}</td>
-                            <td>
-                                <img
-                                    style={{ width: 80, borderRadius: 8 }}
-                                    src={a.image}
-                                    alt="thumb"
-                                />
-                            </td>
-                            <td>{a.name}</td>
-                            <td>{a.slug}</td>
-                            <td>{a.description}</td>
-                            <td>
-                                <button className="btn btn-success btn-sm me-2" onClick={() => navigate(`/admin/specializations/edit/${a._id}`)}>Sửa</button>
-                                <button className="btn btn-danger btn-sm" onClick={() => handleDelete(a._id)}>Xoá</button>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-
-            {/* Phân trang */}
-            {pagination.totalPages > 1 && (
-                <div className="d-flex justify-content-center gap-2 mt-3">
-                    {Array.from({ length: pagination.totalPages }).map((_, i) => (
-                        <button
-                            key={i}
-                            onClick={() => handlePageChange(i + 1)}
-                            className={`btn ${pagination.page === i + 1
-                                ? "btn-primary"
-                                : "btn-outline-primary"
-                                } btn-sm`}
-                        >
-                            {i + 1}
-                        </button>
-                    ))}
-                </div>
+        <>
+            {alert.message && (
+                <Alert
+                    message={alert.message}
+                    type={alert.type}
+                    showIcon
+                    closable
+                    onClose={() => setAlert({ type: '', message: '' })}
+                    style={{ marginBottom: 16 }}
+                />
             )}
-        </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <Title level={3} style={{ margin: 0 }}>
+                    Danh sách chuyên khoa: {pagination.total || 0}
+                </Title>
+                <Button
+                    type="primary"
+                    onClick={() => navigate("/admin/specializations/create")}
+                >
+                    Thêm mới
+                </Button>
+            </div>
+
+            <Table
+                columns={columns}
+                dataSource={specializations}
+                rowKey={r => r._id}
+                loading={loading}
+                pagination={{
+                    current: pagination.page,
+                    pageSize: filters.limit,
+                    total: pagination.total,
+                    onChange: page => setFilters(prev => ({ ...prev, page })),
+                }}
+                scroll={{ x: 800 }}
+            />
+
+            <Modal
+                title="Xác nhận xóa"
+                open={isModalOpen}
+                onOk={handleOk}
+                onCancel={handleCancel}
+                okText="Xóa"
+                okType="danger"
+                cancelText="Hủy"
+            >
+                <p>Bạn có chắc muốn xóa chuyên khoa này không?</p>
+            </Modal>
+        </>
     );
 }
 

@@ -1,126 +1,127 @@
-import { useState, useEffect } from "react";
-import { createSupporter } from "../../../services/supporterService";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { createSupporter } from "../../../services/supporterService";
+import { Form, Input, Button, Upload, Alert, Typography } from "antd";
+import { UploadOutlined } from "@ant-design/icons";
 
+const { Title } = Typography;
 
 function SupporterCreate() {
-    const [formData, setFormData] = useState({
-        email: "",
-        password: "",
-        name: "",
-        phoneNumber: "",
-    });
-    const [thumbnail, setThumbnail] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const navigate = useNavigate()
+  const [form] = Form.useForm();
+  const [thumbnail, setThumbnail] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [alert, setAlert] = useState({ type: "", message: "" });
+  const navigate = useNavigate();
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
-    };
+  const handleSubmit = async (values) => {
+    setLoading(true);
+    try {
+      const formData = new FormData();
+      Object.entries(values).forEach(([key, value]) => {
+        formData.append(key, value);
+      });
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
+      if (thumbnail) formData.append("thumbnail", thumbnail);
 
-        try {
-            const form = new FormData();
-            Object.entries(formData).forEach(([key, value]) => {
-                form.append(key, value);
-            });
-            if (thumbnail) form.append("thumbnail", thumbnail);
+      const res = await createSupporter(formData);
+      if (res.success) {
+        navigate("/admin/supporters", {
+          state: {
+            alert: { type: "success", message: "Tạo hỗ trợ viên thành công!" },
+          },
+        });
+      } else {
+        setAlert({ type: "error", message: res.message || "Không thể tạo hỗ trợ viên!" });
+        setTimeout(() => setAlert({ type: "", message: "" }), 5000);
+      }
+    } catch (err) {
+      console.error(err);
+      setAlert({ type: "error", message: "Đã xảy ra lỗi hệ thống. Vui lòng thử lại!" });
+      setTimeout(() => setAlert({ type: "", message: "" }), 5000);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-            const res = await createSupporter(form);
+  return (
+    <div style={{ maxWidth: 700, margin: "0 auto", marginTop: 32 }}>
+      <Title level={3}>Thêm hỗ trợ viên mới</Title>
 
-            if (res.success) {
-                alert("Tạo hỗ trợ viên thành công!");
-                navigate("/admin/supporters");
-            } else {
-                alert(res.message || "Lỗi khi tạo hỗ trợ viên");
-            }
-        } catch (err) {
-            console.error(err);
-            alert("Có lỗi khi tạo hỗ trợ viên");
-        } finally {
-            setLoading(false);
-        }
-    };
+      {alert.message && (
+        <Alert
+          message={alert.message}
+          type={alert.type}
+          showIcon
+          closable
+          style={{ marginBottom: 16 }}
+          onClose={() => setAlert({ type: "", message: "" })}
+        />
+      )}
 
-    return (
-        <div className="container mt-4">
-            <h3>Thêm hỗ trợ viên mới</h3>
-            <form onSubmit={handleSubmit}>
-                <div className="mb-3">
-                    <label>Email</label>
-                    <input
-                        type="email"
-                        name="email"
-                        className="form-control"
-                        value={formData.email}
-                        onChange={handleChange}
-                        required
-                    />
-                </div>
+      <Form
+        form={form}
+        layout="vertical"
+        onFinish={handleSubmit}
+        initialValues={{ email: "", password: "", name: "", phoneNumber: "" }}
+      >
+        <Form.Item
+          label="Email"
+          name="email"
+          rules={[{ required: true, message: "Vui lòng nhập email!" }]}
+        >
+          <Input placeholder="Email hỗ trợ viên" />
+        </Form.Item>
 
-                <div className="mb-3">
-                    <label>Mật khẩu</label>
-                    <input
-                        type="password"
-                        name="password"
-                        className="form-control"
-                        value={formData.password}
-                        onChange={handleChange}
-                        required
-                    />
-                </div>
+        <Form.Item
+          label="Mật khẩu"
+          name="password"
+          rules={[{ required: true, message: "Vui lòng nhập mật khẩu!" }]}
+        >
+          <Input.Password placeholder="Mật khẩu" />
+        </Form.Item>
 
-                <div className="mb-3">
-                    <label>Tên hỗ trợ viên</label>
-                    <input
-                        type="text"
-                        name="name"
-                        className="form-control"
-                        value={formData.name}
-                        onChange={handleChange}
-                        required
-                    />
-                </div>
+        <Form.Item
+          label="Tên hỗ trợ viên"
+          name="name"
+          rules={[{ required: true, message: "Vui lòng nhập tên!" }]}
+        >
+          <Input placeholder="Tên hỗ trợ viên" />
+        </Form.Item>
 
-                <div className="mb-3">
-                    <label>Số điện thoại</label>
-                    <input
-                        type="text"
-                        name="phoneNumber"
-                        className="form-control"
-                        value={formData.phoneNumber}
-                        onChange={handleChange}
-                    />
-                </div>
+        <Form.Item label="Số điện thoại" name="phoneNumber">
+          <Input placeholder="Số điện thoại" />
+        </Form.Item>
 
-                <div className="mb-3">
-                    <label>Ảnh hỗ trợ viên</label>
-                    <input
-                        type="file"
-                        accept="image/*"
-                        className="form-control"
-                        onChange={(e) => setThumbnail(e.target.files[0])}
-                    />
-                    {thumbnail && (
-                        <img
-                            src={URL.createObjectURL(thumbnail)}
-                            alt="preview"
-                            width="100"
-                            className="mt-2"
-                        />
-                    )}
-                </div>
+        <Form.Item label="Ảnh đại diện">
+          <Upload
+            beforeUpload={(file) => {
+              setThumbnail(file);
+              return false;
+            }}
+            showUploadList={false}
+            accept="image/*"
+          >
+            <Button icon={<UploadOutlined />}>Chọn ảnh</Button>
+          </Upload>
 
-                <button type="submit" className="btn btn-primary" disabled={loading}>
-                    {loading ? "Đang tạo..." : "Tạo hỗ trợ viên"}
-                </button>
-            </form>
-        </div>
-    );
+          {thumbnail && (
+            <img
+              src={URL.createObjectURL(thumbnail)}
+              alt="preview"
+              style={{ width: 100, borderRadius: 8, marginTop: 8 }}
+            />
+          )}
+        </Form.Item>
+
+        <Form.Item>
+          <Button type="primary" htmlType="submit" loading={loading} style={{ marginRight: 8 }}>
+            {loading ? "Đang tạo..." : "Tạo hỗ trợ viên"}
+          </Button>
+          <Button onClick={() => navigate("/admin/supporters")}>Hủy</Button>
+        </Form.Item>
+      </Form>
+    </div>
+  );
 }
 
 export default SupporterCreate;

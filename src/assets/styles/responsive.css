@@ -13,16 +13,19 @@
   .layout-dashboard .ant-layout-footer {
     margin: 0 0 20px 20px;
   }
+
   .layout-dashboard .ant-layout-sider.sider-primary {
     margin: 20px 0 0 20px;
     padding: 13px 20px;
     height: calc(100vh - 20px);
   }
+
   .layout-dashboard .ant-layout {
     width: auto;
     flex-shrink: 1;
     margin-left: 270px;
   }
+
   .layout-dashboard .header-control .sidebar-toggler {
     display: none;
   }
@@ -30,22 +33,33 @@
 
 @media (min-width: 768px) {
   .layout-dashboard .ant-layout-header {
-    margin: 10px 20px;
+    margin: 10px 5px;
   }
+
   .layout-dashboard .header-control {
     margin-top: 0;
   }
+
   .layout-dashboard .header-control .header-search {
     margin: 0 7px;
   }
+
   .layout-dashboard .header-control .btn-sign-in span {
     display: inline;
   }
+
   .profile-nav-bg {
     margin-top: -87.8px;
   }
+
   .card-profile-head {
     margin: -53px 24px 24px;
+  }
+}
+
+@media (max-width: 992px) {
+  .layout-dashboard .ant-layout-header {
+    margin: 10px 20px;
   }
 }
 
@@ -53,25 +67,31 @@
   .card-billing-info.ant-card .ant-card-body {
     display: flex;
   }
+
   .layout-dashboard-rtl {
     overflow: auto;
   }
+
   .layout-dashboard-rtl .ant-layout-sider.sider-primary {
     margin: 20px 20px 0 0;
     height: calc(100vh - 20px);
   }
+
   .layout-dashboard-rtl .ant-layout-sider.sider-primary {
     right: 0;
     left: auto;
   }
+
   .layout-dashboard-rtl .ant-layout-sider.sider-primary {
     right: 0;
     left: auto;
   }
+
   .layout-dashboard-rtl .ant-layout {
     margin-right: 270px;
     margin-left: 0;
   }
+
   .layout-dashboard-rtl .ant-layout-footer {
     margin: 0 20px 20px 0;
   }

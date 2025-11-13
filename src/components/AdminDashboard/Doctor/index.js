@@ -3,37 +3,48 @@ import { deleteDoctor, getAllDoctor } from "../../../services/doctorService";
 import { getAllSpec } from "../../../services/specializationService";
 import { getAllClinic } from "../../../services/clinicService";
 import { useNavigate } from "react-router-dom";
+import { Menu, Dropdown, Button, Table, Space, Typography, Alert, Modal, Input, Row, Col } from "antd";
+import { DownOutlined } from '@ant-design/icons';
+import React from "react";
+import {
+  SearchOutlined,
+} from "@ant-design/icons";
+import { useLocation } from "react-router-dom";
 
 function Doctors() {
-
   const [doctors, setDoctors] = useState([]);
   const [pagination, setPagination] = useState({});
   const [filters, setFilters] = useState({ page: 1, limit: 5 });
   const [loading, setLoading] = useState(true);
   const [specializations, setSpecializations] = useState([]);
   const [clinics, setClinics] = useState([]);
+  const [alert, setAlert] = useState({ type: '', message: '' });
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedDoctorId, setSelectedDoctorId] = useState(null);
+  const location = useLocation();
   const navigate = useNavigate();
+  const [searchValue, setSearchValue] = useState('');
+  const { Title } = Typography;
+
+  useEffect(() => {
+    if (location.state?.alert) {
+      setAlert({ ...location.state.alert, visible: true });
+      setTimeout(() => setAlert(prev => ({ ...prev, visible: false })), 5000);
+    }
+  }, [location.state]);
 
   useEffect(() => {
     const fetchSpecializations = async () => {
       try {
         const res = await getAllSpec();
-        console.log(res)
         if (res.success) setSpecializations(res.data);
-        else console.log(res.message);
-      } catch (err) {
-        console.log(err);
-      }
+      } catch (err) { console.log(err); }
     };
     const fetchClinics = async () => {
       try {
         const res = await getAllClinic();
-        console.log(res)
         if (res.success) setClinics(res.data);
-        else console.log(res.message);
-      } catch (err) {
-        console.log(err);
-      }
+      } catch (err) { console.log(err); }
     };
     fetchSpecializations();
     fetchClinics();
@@ -43,176 +54,199 @@ function Doctors() {
     try {
       setLoading(true);
       const res = await getAllDoctor(params);
+      console.log(res)
       if (res.success) {
         setDoctors(res.data);
         setPagination(res.pagination);
-      } else {
-        console.error(res.message);
       }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+    } catch (err) { console.error(err); }
+    finally { setLoading(false); }
   };
 
-  useEffect(() => {
-    fetchDoctors(filters);
-  }, [filters]);
+  useEffect(() => { fetchDoctors(filters); }, [filters]);
 
-  const handleSpecChange = (e) => {
-    const specializationId = e.target.value;
-    setFilters((prev) => ({
-      ...prev,
-      specializationId,
-      page: 1
-    }));
+
+  const showDeleteModal = (id) => {
+    setSelectedDoctorId(id);
+    setIsModalOpen(true);
   };
 
-  const handleClinicChange = (e) => {
-    const clinicId = e.target.value;
-    setFilters((prev) => ({
-      ...prev,
-      clinicId,
-      page: 1
-    }));
-  };
-
-  const handlePageChange = (newPage) => {
-    setFilters((prev) => ({
-      ...prev,
-      page: newPage
-    }));
-  };
-
-  const handleDelete = async (id) => {
-    if (window.confirm("Bạn có chắc muốn xóa bác sĩ này không?")) {
-      const res = await deleteDoctor(id);
+  const handleOk = async () => {
+    try {
+      const res = await deleteDoctor(selectedDoctorId);
       if (res.success) {
-        alert("Xóa thành công!");
+        setAlert({ type: 'success', message: 'Xoá bác sĩ thành công!' });
 
         const newTotal = (pagination.total || 0) - 1;
         const totalPages = Math.ceil(newTotal / (filters.limit || 5));
-        if (filters.page > totalPages && totalPages > 0) {
-          setFilters((prev) => ({ ...prev, page: totalPages }));
-        } else {
-          fetchDoctors(filters);
-        }
+        const newPage = filters.page > totalPages ? totalPages : filters.page;
 
+        setFilters(prev => ({ ...prev, page: newPage }));
+
+        setTimeout(() => fetchDoctors({ ...filters, page: newPage }), 200);
       } else {
-        alert("Lỗi khi xóa!");
+        setAlert({ type: 'error', message: res.message || 'Không thể xóa bác sĩ' });
       }
+    } catch (err) {
+      setAlert({ type: 'error', message: 'Đã xảy ra lỗi hệ thống' });
+    } finally {
+      setIsModalOpen(false);
+      setSelectedDoctorId(null);
+      setTimeout(() => setAlert({ type: '', message: '' }), 5000);
     }
   };
 
 
-  if (loading) return <p>Đang tải dữ liệu...</p>;
+  const handleCancel = () => {
+    setIsModalOpen(false);
+    setSelectedDoctorId(null);
+  };
+
+  console.log(filters)
+
+  const menuSpecializations = (
+    <Menu
+      onClick={(info) => setFilters(prev => ({ ...prev, specializationId: info.key === 'all' ? '' : info.key, page: 1 }))}
+    >
+      <Menu.Item key="all">Tất cả</Menu.Item>
+      {specializations.map(s => <Menu.Item key={s._id}>{s.name}</Menu.Item>)}
+    </Menu>
+  );
+
+  const menuClinics = (
+    <Menu
+      onClick={(info) => setFilters(prev => ({ ...prev, clinicId: info.key === 'all' ? '' : info.key, page: 1 }))}
+    >
+      <Menu.Item key="all">Tất cả</Menu.Item>
+      {clinics.map(c => <Menu.Item key={c._id}>{c.name}</Menu.Item>)}
+    </Menu>
+  );
 
   return (
-    <div>
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2 className="m-0">Danh sách bác sĩ ({pagination.total || 0})</h2>
-        <button
-          className="btn btn-primary"
+    <>
+      {alert.message && (
+        <Alert
+          message={alert.message}
+          type={alert.type}
+          showIcon
+          closable
+          onClose={() => setAlert({ type: '', message: '' })}
+          style={{ marginBottom: 16 }}
+        />
+      )}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <Title level={3} style={{ margin: 0 }}>
+          Danh sách bác sĩ: {pagination.total || 0}
+        </Title>
+        <Button
+          type="primary"
           onClick={() => navigate("/admin/doctors/create")}
         >
-          + Thêm mới
-        </button>
+          Thêm mới
+        </Button>
       </div>
 
 
-      <div className="d-flex align-items-center">
-        <span>Chuyên khoa</span>
-        <select
-          onChange={handleSpecChange}
-          value={filters.specializationId || ""}
-          className="form-select"
-          style={{ display: "block", width: "auto", marginRight: "50px" }}
-        >
-          <option value="">Tất cả</option>
-          {specializations.map((spec) => (
-            <option key={spec._id} value={spec._id}>
-              {spec.name}
-            </option>
-          ))}
-        </select>
-
-        <span>Phòng khám</span>
-        <select
-          onChange={handleClinicChange}
-          value={filters.clinicId || ""}
-          className="form-select"
-          style={{ display: "block", width: "auto" }}
-        >
-          <option value="">Tất cả</option>
-          {clinics.map((clinic) => (
-            <option key={clinic._id} value={clinic._id}>
-              {clinic.name}
-            </option>
-          ))}
-        </select>
-      </div>
-
-
-
-      <table className="table table-striped table-bordered mt-3">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Hình ảnh</th>
-            <th>Bác sĩ</th>
-            <th>Email</th>
-            <th>Slug</th>
-            <th>Chuyên khoa</th>
-            <th>Phòng khám</th>
-            <th>SĐT</th>
-            <th>Hành động</th>
-          </tr>
-        </thead>
-        <tbody>
-          {doctors.map((a, idx) => (
-            <tr key={a._id}>
-              <td>{(filters.page - 1) * (filters.limit || 10) + idx + 1}</td>
-              <td>
-                <img
-                  style={{ width: 80, borderRadius: 8 }}
-                  src={a.thumbnail}
-                  alt="thumb"
+      <div>
+        <div className="my-4">
+          <Row gutter={[16, 16]} align="middle">
+            {/* Search input + button */}
+            <Col xs={24} md={8}>
+              <div style={{ display: 'flex', width: '100%' }}>
+                <Input
+                  placeholder="Tìm kiếm theo tên"
+                  value={searchValue}
+                  onChange={e => setSearchValue(e.target.value)}
+                  onPressEnter={() => setFilters(prev => ({ ...prev, keyword: searchValue, page: 1 }))}
+                  style={{ flex: 1, height: 40 }}
+                  allowClear
                 />
-              </td>
-              <td>{a.name}</td>
-              <td>{a.userId?.email}</td>
-              <td>{a.slug}</td>
-              <td>{a.specializationId?.name}</td>
-              <td>{a.clinicId?.name}</td>
-              <td>{a.phoneNumber}</td>
-              <td>
-                  <button className="btn btn-success btn-sm me-2" onClick={() => navigate(`/admin/doctors/edit/${a._id}`)}>Sửa</button>
-                <button className="btn btn-danger btn-sm" onClick={() => handleDelete(a._id)}>Xoá</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+                <Button
+                  type="primary"
+                  onClick={() => setFilters(prev => ({ ...prev, keyword: searchValue, page: 1 }))}
+                  style={{ height: 40, marginLeft: 8 }}
+                >
+                  Tìm kiếm
+                </Button>
+              </div>
+            </Col>
 
-      {/* Phân trang */}
-      {pagination.totalPages > 1 && (
-        <div className="d-flex justify-content-center gap-2 mt-3">
-          {Array.from({ length: pagination.totalPages }).map((_, i) => (
-            <button
-              key={i}
-              onClick={() => handlePageChange(i + 1)}
-              className={`btn ${pagination.page === i + 1
-                ? "btn-primary"
-                : "btn-outline-primary"
-                } btn-sm`}
-            >
-              {i + 1}
-            </button>
-          ))}
+            {/* Chuyên khoa */}
+            <Col xs={24} md={8}>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <span className="me-2">Chuyên khoa</span>
+                <Dropdown overlay={menuSpecializations}>
+                  <Button>
+                    {filters.specializationId
+                      ? specializations.find(s => s._id === filters.specializationId)?.name
+                      : 'Tất cả'} <DownOutlined />
+                  </Button>
+                </Dropdown>
+              </div>
+            </Col>
+
+            {/* Phòng khám */}
+            <Col xs={24} md={8}>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <span className="me-2">Phòng khám</span>
+                <Dropdown overlay={menuClinics}>
+                  <Button>
+                    {filters.clinicId
+                      ? clinics.find(c => c._id === filters.clinicId)?.name
+                      : 'Tất cả'} <DownOutlined />
+                  </Button>
+                </Dropdown>
+              </div>
+            </Col>
+          </Row>
         </div>
-      )}
-    </div>
+
+        <Table
+          columns={[
+            { title: '#', render: (_, __, idx) => (filters.page - 1) * filters.limit + idx + 1 },
+            { title: 'Hình ảnh', dataIndex: 'thumbnail', render: src => <img src={src} alt="thumb" style={{ width: 80, borderRadius: 8 }} /> },
+            { title: 'Bác sĩ', dataIndex: 'name' },
+            { title: 'Email', render: r => r.userId?.email || '—' },
+            { title: 'Slug', dataIndex: 'slug' },
+            { title: 'Chuyên khoa', render: r => r.specializationId?.name || '—' },
+            { title: 'Phòng khám', render: r => r.clinicId?.name || '—' },
+            { title: 'SĐT', dataIndex: 'phoneNumber' },
+            {
+              title: 'Hành động',
+              render: record => (
+                <Space>
+                  <Button type="primary" size="small" onClick={() => navigate(`/admin/doctors/edit/${record._id}`)}>Sửa</Button>
+                  <Button danger size="small" onClick={() => showDeleteModal(record._id)}>Xoá</Button>
+                </Space>
+              )
+            }
+          ]}
+          dataSource={doctors}
+          rowKey={r => r._id}
+          loading={loading}
+          pagination={{
+            current: pagination.page,
+            pageSize: filters.limit,
+            total: pagination.total,
+            onChange: page => setFilters(prev => ({ ...prev, page })),
+          }}
+          scroll={{ x: 1200 }}
+        />
+
+      </div>
+
+      <Modal
+        title="Xác nhận xóa"
+        open={isModalOpen}
+        onOk={handleOk}
+        onCancel={handleCancel}
+        okText="Xóa"
+        okType="danger"
+        cancelText="Hủy"
+      >
+        <p>Bạn có chắc muốn xóa bác sĩ này không?</p>
+      </Modal>
+    </>
   );
 }
 

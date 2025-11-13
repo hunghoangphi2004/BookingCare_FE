@@ -1,163 +1,147 @@
 import { useEffect, useState } from "react";
-import { deleteClinic, getAllClinic } from "../../../services/clinicService";
-import { useNavigate } from "react-router-dom";
-
+import { getAllClinic, deleteClinic } from "../../../services/clinicService";
+import { useNavigate, useLocation } from "react-router-dom";
+import { Table, Button, Space, Typography, Alert, Modal } from "antd";
 
 function Clinics() {
-    const [Clinics, setClinics] = useState([]);
+    const [clinics, setClinics] = useState([]);
     const [pagination, setPagination] = useState({});
     const [filters, setFilters] = useState({ page: 1, limit: 5 });
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
-    const navigate = useNavigate();
+    const [alert, setAlert] = useState({ type: '', message: '' });
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedClinicId, setSelectedClinicId] = useState(null);
 
+    const navigate = useNavigate();
+    const { Title } = Typography;
+
+    const location = useLocation();
 
     useEffect(() => {
-        fetchClinics(filters);
-    }, [filters]);
-
-    const fetchClinics = async (params = {}) => {
+        if (location.state?.alert) {
+            setAlert(location.state.alert);
+            navigate(location.pathname, { replace: true });
+            setTimeout(() => setAlert({ type: '', message: '' }), 5000);
+        }
+    }, [location, navigate]);
+    const fetchClinics = async (params = filters) => {
         try {
-            console.log(params)
             setLoading(true);
             const res = await getAllClinic(params);
-            console.log(res)
             if (res.success) {
                 setClinics(res.data);
                 setPagination(res.pagination);
             } else {
-                setError(res.message || "Không lấy được dữ liệu");
+                setAlert({ type: 'error', message: res.message || 'Không lấy được dữ liệu' });
             }
         } catch (err) {
             console.error(err);
-            setError("Có lỗi xảy ra khi lấy dữ liệu");
+            setAlert({ type: 'error', message: 'Có lỗi xảy ra khi lấy dữ liệu' });
         } finally {
             setLoading(false);
         }
     };
 
-    console.log(Clinics)
+    useEffect(() => {
+        fetchClinics(filters);
+    }, [filters]);
 
-    //   const handleFilterChange = (e) => {
-    //     const specializationId = e.target.value;
-    //     setFilters((prev) => ({
-    //       ...prev,
-    //       specializationId,
-    //       page: 1 
-    //     }));
-    //   };
+    // Delete clinic
+    const showDeleteModal = (id) => {
+        setSelectedClinicId(id);
+        setIsModalOpen(true);
+    };
 
-    const handleDelete = async (id) => {
-        if (window.confirm("Bạn có chắc muốn xóa phòng khám này không?")) {
-            const res = await deleteClinic(id);
+    const handleOk = async () => {
+        try {
+            const res = await deleteClinic(selectedClinicId);
             if (res.success) {
-                alert("Xóa thành công!");
-                setClinics((prev) => prev.filter((d) => d._id !== id));
-                setPagination((prev) => {
-                    const newTotal = (prev.total || 0) - 1;
-                    const totalPages = Math.ceil(newTotal / (filters.limit || 10));
-
-                    if (filters.page > totalPages && totalPages > 0) {
-                        setFilters((f) => ({ ...f, page: totalPages }));
-                    }
-
-                    return {
-                        ...prev,
-                        total: newTotal,
-                        totalPages,
-                    };
-                });
+                setAlert({ type: 'success', message: 'Xóa phòng khám thành công!' });
+                const newTotal = (pagination.total || 0) - 1;
+                const totalPages = Math.ceil(newTotal / (filters.limit || 5));
+                const newPage = filters.page > totalPages ? totalPages : filters.page;
+                setFilters(prev => ({ ...prev, page: newPage }));
+                setTimeout(() => fetchClinics({ ...filters, page: newPage }), 200);
             } else {
-                alert("Lỗi khi xóa!");
+                setAlert({ type: 'error', message: res.message || 'Không thể xóa phòng khám' });
             }
+        } catch (err) {
+            setAlert({ type: 'error', message: 'Đã xảy ra lỗi hệ thống' });
+        } finally {
+            setIsModalOpen(false);
+            setSelectedClinicId(null);
+            setTimeout(() => setAlert({ type: '', message: '' }), 5000);
         }
     };
 
-    const handlePageChange = (newPage) => {
-        setFilters((prev) => ({
-            ...prev,
-            page: newPage
-        }));
+    const handleCancel = () => {
+        setIsModalOpen(false);
+        setSelectedClinicId(null);
     };
 
-    if (loading) return <p>Đang tải dữ liệu...</p>;
-    if (error) return <div className="alert alert-danger">{error}</div>;
+    const columns = [
+        { title: '#', render: (_, __, idx) => (filters.page - 1) * filters.limit + idx + 1 },
+        { title: 'Hình ảnh', dataIndex: 'image', render: src => <img src={src} alt="thumb" style={{ width: 80, height: 80, borderRadius: 8, objectFit: 'cover' }} /> },
+        { title: 'Tên', dataIndex: 'name' },
+        { title: 'Slug', dataIndex: 'slug' },
+        { title: 'SĐT', dataIndex: 'phone' },
+        { title: 'Địa chỉ', dataIndex: 'address' },
+        { title: 'Tình trạng', render: r => r.isActive ? <Button type="primary" size="small">Đang hoạt động</Button> : <Button danger size="small">Đã khóa</Button> },
+        {
+            title: 'Hành động',
+            render: r => (
+                <Space>
+                    <Button type="primary" size="small" onClick={() => navigate(`/admin/clinics/edit/${r._id}`)}>Sửa</Button>
+                    <Button danger size="small" onClick={() => showDeleteModal(r._id)}>Xoá</Button>
+                </Space>
+            )
+        }
+    ];
 
     return (
-        <div>
-            <h2 className="mb-5">Danh sách phòng khám ({pagination.total || 0})</h2>
-            <button
-                className="btn btn-primary"
-                onClick={() => navigate("/admin/clinics/create")}
-            >
-                + Thêm mới
-            </button>
-
-
-            <table className="table table-striped table-bordered mt-3">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Hình ảnh</th>
-                        <th>Tên</th>
-                        <th>Slug</th>
-                        <th>Số điện thoại</th>
-                        <th>Địa chỉ</th>
-                        <th>Tình trạng</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {Clinics.map((a, idx) => (
-                        <tr key={a._id}>
-                            <td>{(filters.page - 1) * (filters.limit || 10) + idx + 1}</td>
-                            <td>
-                                <img
-                                    style={{ width: 80, borderRadius: 8 }}
-                                    src={a.image}
-                                    alt="thumb"
-                                />
-                            </td>
-                            <td>{a.name}</td>
-                            <td>{a.slug}</td>
-                            <td>{a.phone}</td>
-                            <td>{a.address}</td>
-                            <td>
-                                <td>
-                                    {a.isActive ? (
-                                        <button className="btn btn-success">Đang hoạt động</button>
-                                    ) : (
-                                        <button className="btn btn-warning">Đã khóa</button>
-                                    )}
-                                </td>
-                            </td>
-                            <td>
-
-                                <button className="btn btn-success btn-sm" onClick={() => navigate(`/admin/clinics/edit/${a._id}`)}>Sửa</button>
-                                <button className="btn btn-danger btn-sm" onClick={() => handleDelete(a._id)}>Xoá</button>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-
-            {/* Phân trang */}
-            {pagination.totalPages > 1 && (
-                <div className="d-flex justify-content-center gap-2 mt-3">
-                    {Array.from({ length: pagination.totalPages }).map((_, i) => (
-                        <button
-                            key={i}
-                            onClick={() => handlePageChange(i + 1)}
-                            className={`btn ${pagination.page === i + 1
-                                ? "btn-primary"
-                                : "btn-outline-primary"
-                                } btn-sm`}
-                        >
-                            {i + 1}
-                        </button>
-                    ))}
-                </div>
+        <>
+            {alert.message && (
+                <Alert
+                    message={alert.message}
+                    type={alert.type}
+                    showIcon
+                    closable
+                    onClose={() => setAlert({ type: '', message: '' })}
+                    style={{ marginBottom: 16 }}
+                />
             )}
-        </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <Title level={3} style={{ margin: 0 }}>Danh sách phòng khám: {pagination.total || 0}</Title>
+                <Button type="primary" onClick={() => navigate("/admin/clinics/create")}>Thêm mới</Button>
+            </div>
+
+            <Table
+                columns={columns}
+                dataSource={clinics}
+                rowKey={r => r._id}
+                loading={loading}
+                pagination={{
+                    current: pagination.page,
+                    pageSize: filters.limit,
+                    total: pagination.total,
+                    onChange: page => setFilters(prev => ({ ...prev, page })),
+                }}
+                scroll={{ x: 1200 }}
+            />
+
+            <Modal
+                title="Xác nhận xóa"
+                open={isModalOpen}
+                onOk={handleOk}
+                onCancel={handleCancel}
+                okText="Xóa"
+                okType="danger"
+                cancelText="Hủy"
+            >
+                <p>Bạn có chắc muốn xóa phòng khám này không?</p>
+            </Modal>
+        </>
     );
 }
 

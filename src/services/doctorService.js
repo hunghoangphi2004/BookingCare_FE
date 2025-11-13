@@ -6,7 +6,7 @@ export const getDoctorById = async (id) => {
 
 export const getAllDoctor = async (params = {}) => {
   const query = new URLSearchParams(params).toString();
-  const url = query ? `/admin/doctors/get-all?${query}` : `/doctors/get-all`
+  const url = `/admin/doctors/get-all${query ? `?${query}` : ''}`;
   const result = await getInclude(url);
   return result;
 }

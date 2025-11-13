@@ -1,142 +1,150 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import {getSupporterById, updateSupporter } from "../../../services/supporterService";
+import { getSupporterById, updateSupporter } from "../../../services/supporterService";
+import { Form, Input, Button, Upload, Alert } from "antd";
+import { UploadOutlined } from "@ant-design/icons";
 
-function SupporterEdit() {
-    const { id } = useParams();
-    const navigate = useNavigate();
+const SupporterEdit = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [form] = Form.useForm();
 
-    const [formData, setFormData] = useState({
-        email: "",
-        password: "",
-        name: "",
-        phoneNumber: "",
-    });
+  const [oldSupporter, setOldSupporter] = useState(null);
+  const [thumbnail, setThumbnail] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [alert, setAlert] = useState({ type: "", message: "" });
 
-    const [thumbnail, setThumbnail] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const [oldSupporter, setOldSupporter] = useState(null);
-
-    useEffect(() => {
-        const fetchDataSupporter = async () => {
-            try {
-                const res = await getSupporterById(id);
-                console.log(res)
-                console.log(res.data.supporter)
-                console.log(res.data.user)
-                if (res.data) {
-                    setOldSupporter(res.data);
-                    setFormData({
-                        email: res.data.user.email || "",
-                        password: "",
-                        name: res.data.supporter.name || "",
-                        phoneNumber: res.data.supporter.phoneNumber || "",
-                    });
-                }
-            } catch (error) {
-                console.error("Lỗi khi tải dữ liệu:", error);
-            }
-        };
-        fetchDataSupporter();
-    }, [id]);
-
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-
-        const form = new FormData();
-        Object.entries(formData).forEach(([key, value]) => {
-            form.append(key, value);
-        });
-        if (thumbnail) form.append("thumbnail", thumbnail);
-
-        const res = await updateSupporter(id, form);
-        if (res.success) {
-            alert("Cập nhật hỗ trợ viên thành công!");
-            navigate("/admin/supporters");
-        } else {
-            alert(res.message || "Lỗi khi cập nhật hỗ trợ viên");
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await getSupporterById(id);
+        if (res.data) {
+          setOldSupporter(res.data);
+          form.setFieldsValue({
+            email: res.data.user?.email || "",
+            password: "",
+            name: res.data.supporter?.name || "",
+            phoneNumber: res.data.supporter?.phoneNumber || "",
+          });
         }
+      } catch (err) {
+        console.error(err);
+        setAlert({ type: "error", message: "Lỗi khi tải dữ liệu hỗ trợ viên." });
+      }
     };
+    fetchData();
+  }, [id, form]);
 
+  const handleSubmit = async (values) => {
+    setLoading(true);
+    try {
+      const formData = new FormData();
+      Object.entries(values).forEach(([key, value]) => formData.append(key, value));
+      if (thumbnail) formData.append("thumbnail", thumbnail);
 
-    if (!oldSupporter) return <p className="text-center mt-5">Đang tải dữ liệu...</p>;
+      const res = await updateSupporter(id, formData);
+      if (res.success) {
+        navigate("/admin/supporters", {
+          state: {
+            alert: { type: "success", message: "Hỗ trợ viên đã được cập nhật thành công!" },
+          },
+        });
+      } else {
+        setAlert({ type: "error", message: res.message || "Không thể cập nhật hỗ trợ viên!" });
+        setTimeout(() => setAlert({ type: "", message: "" }), 5000);
+      }
+    } catch (err) {
+      console.error(err);
+      setAlert({ type: "error", message: "Đã xảy ra lỗi hệ thống. Vui lòng thử lại!" });
+      setTimeout(() => setAlert({ type: "", message: "" }), 5000);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    return (
-        <div className="container mt-4">
-            <h3>Sửa thông tin hỗ viên</h3>
-            <form onSubmit={handleSubmit}>
-                <div className="mb-3">
-                    <label>Email</label>
-                    <input
-                        type="email"
-                        name="email"
-                        className="form-control"
-                        value={formData.email}
-                        onChange={handleChange}
-                        required
-                    />
-                </div>
+  if (!oldSupporter) return <p className="text-center mt-5">Đang tải dữ liệu...</p>;
 
-                <div className="mb-3">
-                    <label>Mật khẩu</label>
-                    <input
-                        type="password"
-                        name="password"
-                        className="form-control"
-                        value={formData.password}
-                        onChange={handleChange}
-                    />
-                </div>
+  return (
+    <div className="container mt-4">
+      <h3 className="mb-4">Cập nhật hỗ trợ viên</h3>
 
-                <div className="mb-3">
-                    <label>Số điện thoại</label>
-                    <input
-                        type="text"
-                        name="phoneNumber"
-                        className="form-control"
-                        value={formData.phoneNumber}
-                        onChange={handleChange}
-                    />
-                </div>
+      {alert.message && (
+        <Alert
+          message={alert.message}
+          type={alert.type}
+          showIcon
+          closable
+          style={{ marginBottom: 16 }}
+          onClose={() => setAlert({ type: "", message: "" })}
+        />
+      )}
 
-                <div className="mb-3">
-                    <label>Ảnh hỗ trợ viên</label>
-                    <input
-                        type="file"
-                        accept="image/*"
-                        className="form-control"
-                        onChange={(e) => setThumbnail(e.target.files[0])}
-                    />
-                    {thumbnail ? (
-                        <img
-                            src={URL.createObjectURL(thumbnail)}
-                            alt="preview"
-                            width="100"
-                            className="mt-2"
-                        />
-                    ) : (
-                        oldSupporter.supporter.thumbnail && (
-                            <img
-                                src={oldSupporter.supporter.thumbnail}
-                                alt="old supporter"
-                                width="100"
-                                className="mt-2"
-                            />
-                        )
-                    )}
-                </div>
+      <Form
+        form={form}
+        layout="vertical"
+        onFinish={handleSubmit}
+        style={{ maxWidth: 700 }}
+      >
+        <Form.Item
+          label="Email"
+          name="email"
+          rules={[{ required: true, message: "Vui lòng nhập email!" }]}
+        >
+          <Input type="email" />
+        </Form.Item>
 
-                <button type="submit" className="btn btn-primary" disabled={loading}>
-                    {loading ? "Đang lưu..." : "Lưu thay đổi"}
-                </button>
-            </form>
-        </div>
-    );
-}
+        <Form.Item label="Mật khẩu" name="password">
+          <Input.Password placeholder="Để trống nếu không muốn đổi mật khẩu" />
+        </Form.Item>
 
-export default SupporterEdit
+        <Form.Item
+          label="Tên hỗ trợ viên"
+          name="name"
+          rules={[{ required: true, message: "Vui lòng nhập tên!" }]}
+        >
+          <Input />
+        </Form.Item>
+
+        <Form.Item label="Số điện thoại" name="phoneNumber">
+          <Input />
+        </Form.Item>
+
+        <Form.Item label="Ảnh hỗ trợ viên">
+          <Upload
+            beforeUpload={(file) => {
+              setThumbnail(file);
+              return false;
+            }}
+            showUploadList={false}
+          >
+            <Button icon={<UploadOutlined />}>Chọn ảnh</Button>
+          </Upload>
+          {thumbnail ? (
+            <img
+              src={URL.createObjectURL(thumbnail)}
+              alt="preview"
+              style={{ width: 100, borderRadius: 8, marginTop: 10 }}
+            />
+          ) : (
+            oldSupporter.supporter?.thumbnail && (
+              <img
+                src={oldSupporter.supporter.thumbnail}
+                alt="old supporter"
+                style={{ width: 100, borderRadius: 8, marginTop: 10 }}
+              />
+            )
+          )}
+        </Form.Item>
+
+        <Form.Item>
+          <Button type="primary" htmlType="submit" loading={loading} style={{ marginRight: 8 }}>
+            {loading ? "Đang cập nhật..." : "Cập nhật hỗ trợ viên"}
+          </Button>
+          <Button onClick={() => navigate("/admin/supporters")}>Hủy</Button>
+        </Form.Item>
+      </Form>
+    </div>
+  );
+};
+
+export default SupporterEdit;

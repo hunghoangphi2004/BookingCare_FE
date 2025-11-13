@@ -1,206 +1,159 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getClinicById, updateClinic } from "../../../services/clinicService";
+import { Form, Input, Button, Upload, Alert, Radio } from "antd";
+import { UploadOutlined } from "@ant-design/icons";
 
-function ClinicEdit() {
-  const { id } = useParams();
-  const navigate = useNavigate();
+const ClinicEdit = () => {
+    const { id } = useParams();
+    const navigate = useNavigate();
+    const [form] = Form.useForm();
 
-  const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    address: "",
-    openingHours: "",
-    phone: "",
-    isActive: true,
-  });
+    const [loading, setLoading] = useState(false);
+    const [image, setImage] = useState(null);
+    const [oldClinic, setOldClinic] = useState(null);
+    const [alert, setAlert] = useState({ type: '', message: '' });
 
-  const [image, setImage] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [oldClinic, setOldClinic] = useState(null);
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const res = await getClinicById(id);
+                if (res.data) {
+                    setOldClinic(res.data);
+                    form.setFieldsValue({
+                        name: res.data.name || "",
+                        description: res.data.description || "",
+                        address: res.data.address || "",
+                        openingHours: res.data.openingHours || "",
+                        phone: res.data.phone || "",
+                        isActive: res.data.isActive ?? true,
+                    });
+                }
+            } catch (err) {
+                console.error(err);
+                setAlert({ type: 'error', message: "Lỗi khi tải dữ liệu phòng khám." });
+            }
+        };
+        fetchData();
+    }, [id, form]);
 
-  useEffect(() => {
-    const fetchDataClinic = async () => {
-      try {
-        const clinic = await getClinicById(id);
-        if (clinic.data) {
-          setOldClinic(clinic.data);
-          setFormData({
-            name: clinic.data.name || "",
-            description: clinic.data.description || "",
-            address: clinic.data.address || "",
-            openingHours: clinic.data.openingHours || "",
-            phone: clinic.data.phone || "",
-            isActive: clinic.data.isActive ?? true,
-          });
+    const handleSubmit = async (values) => {
+        setLoading(true);
+        try {
+            const formData = new FormData();
+            Object.entries(values).forEach(([key, value]) => formData.append(key, value));
+            if (image) formData.append("image", image);
+
+            const res = await updateClinic(id, formData);
+            if (res.success) {
+                navigate("/admin/clinics", {
+                    state: {
+                        alert: {
+                            type: "success",
+                            message: "Phòng khám đã được cập nhật thành công!"
+                        }
+                    }
+                });
+            } else {
+                setAlert({ type: 'error', message: res.message || "Không thể cập nhật phòng khám!" });
+                setTimeout(() => setAlert({ type: '', message: '' }), 5000);
+            }
+        } catch (err) {
+            console.error(err);
+            setAlert({ type: 'error', message: "Đã xảy ra lỗi hệ thống. Vui lòng thử lại!" });
+            setTimeout(() => setAlert({ type: '', message: '' }), 5000);
+        } finally {
+            setLoading(false);
         }
-      } catch (error) {
-        console.error("Lỗi khi tải dữ liệu:", error);
-      }
     };
-    fetchDataClinic(id);
-  }, [id]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
+    if (!oldClinic) return <p className="text-center mt-5">Đang tải dữ liệu...</p>;
 
-    const newValue =
-      name === "isActive" ? value === "true" : value;
+    return (
+        <div className="container mt-4">
+            <h3 className="mb-4">Cập nhật phòng khám</h3>
 
-    setFormData((prev) => ({ ...prev, [name]: newValue }));
-  };
+            {alert.message && (
+                <Alert
+                    message={alert.message}
+                    type={alert.type}
+                    showIcon
+                    closable
+                    style={{ marginBottom: 16 }}
+                    onClose={() => setAlert({ type: '', message: '' })}
+                />
+            )}
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+            <Form
+                form={form}
+                layout="vertical"
+                onFinish={handleSubmit}
+                style={{ maxWidth: 700 }}
+            >
+                <Form.Item
+                    label="Tên phòng khám"
+                    name="name"
+                    rules={[{ required: true, message: "Vui lòng nhập tên phòng khám!" }]}
+                >
+                    <Input />
+                </Form.Item>
 
-    const form = new FormData();
-    Object.entries(formData).forEach(([key, value]) => {
-      form.append(key, value);
-    });
-    if (image) form.append("image", image);
+                <Form.Item label="Mô tả" name="description">
+                    <Input.TextArea rows={4} />
+                </Form.Item>
 
-    const res = await updateClinic(id, form);
-    setLoading(false);
+                <Form.Item label="Địa chỉ" name="address">
+                    <Input />
+                </Form.Item>
 
-    console.log(form)
+                <Form.Item label="Giờ làm việc" name="openingHours">
+                    <Input />
+                </Form.Item>
 
-    if (res.success) {
-      alert("Cập nhật phòng khám thành công!");
-      navigate("/admin/clinics");
-    } else {
-      alert(res.message || "Lỗi khi cập nhật phòng khám");
-    }
-  };
+                <Form.Item label="Số điện thoại" name="phone">
+                    <Input />
+                </Form.Item>
 
-  if (!oldClinic) return <p className="text-center mt-5">Đang tải dữ liệu...</p>;
+                <Form.Item label="Trạng thái" name="isActive">
+                    <Radio.Group>
+                        <Radio value={true}>Hoạt động</Radio>
+                        <Radio value={false}>Ngừng hoạt động</Radio>
+                    </Radio.Group>
+                </Form.Item>
 
-  return (
-    <div className="container mt-4">
-      <h3>Cập nhật phòng khám</h3>
-      <form onSubmit={handleSubmit}>
-        <div className="mb-3">
-          <label>Tên phòng khám</label>
-          <input
-            type="text"
-            name="name"
-            className="form-control"
-            value={formData.name}
-            onChange={handleChange}
-            required
-          />
+                <Form.Item label="Ảnh phòng khám">
+                    <Upload
+                        beforeUpload={(file) => { setImage(file); return false; }}
+                        showUploadList={false}
+                    >
+                        <Button icon={<UploadOutlined />}>Chọn ảnh</Button>
+                    </Upload>
+                    {image ? (
+                        <img
+                            src={URL.createObjectURL(image)}
+                            alt="preview"
+                            style={{ width: 100, borderRadius: 8, marginTop: 10 }}
+                        />
+                    ) : (
+                        oldClinic?.image && (
+                            <img
+                                src={oldClinic.image}
+                                alt="old clinic"
+                                style={{ width: 100, borderRadius: 8, marginTop: 10 }}
+                            />
+                        )
+                    )}
+                </Form.Item>
+
+                <Form.Item>
+                    <Button type="primary" htmlType="submit" loading={loading} style={{ marginRight: 8 }}>
+                        {loading ? "Đang cập nhật..." : "Cập nhật phòng khám"}
+                    </Button>
+                    <Button onClick={() => navigate("/admin/clinics")}>Hủy</Button>
+                </Form.Item>
+            </Form>
         </div>
-
-        <div className="mb-3">
-          <label>Mô tả</label>
-          <textarea
-            name="description"
-            className="form-control"
-            value={formData.description}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div className="mb-3">
-          <label>Địa chỉ</label>
-          <input
-            type="text"
-            name="address"
-            className="form-control"
-            value={formData.address}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div className="mb-3">
-          <label>Giờ làm việc</label>
-          <input
-            type="text"
-            name="openingHours"
-            className="form-control"
-            value={formData.openingHours}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div className="mb-3">
-          <label>Số điện thoại</label>
-          <input
-            type="text"
-            name="phone"
-            className="form-control"
-            value={formData.phone}
-            onChange={handleChange}
-          />
-        </div>
-
-        {/* 👇 Trạng thái (radio) */}
-        <div className="mb-3">
-          <label className="d-block mb-2">Trạng thái</label>
-          <div className="form-check form-check-inline">
-            <input
-              className="form-check-input"
-              type="radio"
-              name="isActive"
-              id="statusActive"
-              value="true"
-              checked={formData.isActive === true}
-              onChange={handleChange}
-            />
-            <label className="form-check-label" htmlFor="statusActive">
-              Hoạt động
-            </label>
-          </div>
-          <div className="form-check form-check-inline">
-            <input
-              className="form-check-input"
-              type="radio"
-              name="isActive"
-              id="statusInactive"
-              value="false"
-              checked={formData.isActive === false}
-              onChange={handleChange}
-            />
-            <label className="form-check-label" htmlFor="statusInactive">
-              Ngừng hoạt động
-            </label>
-          </div>
-        </div>
-
-        {/* Ảnh */}
-        <div className="mb-3">
-          <label>Ảnh phòng khám</label>
-          <input
-            type="file"
-            accept="image/*"
-            className="form-control"
-            onChange={(e) => setImage(e.target.files[0])}
-          />
-          {image ? (
-            <img
-              src={URL.createObjectURL(image)}
-              alt="preview"
-              width="100"
-              className="mt-2"
-            />
-          ) : (
-            oldClinic?.image && (
-              <img
-                src={oldClinic.image}
-                alt="old clinic"
-                width="100"
-                className="mt-2"
-              />
-            )
-          )}
-        </div>
-
-        <button type="submit" className="btn btn-primary" disabled={loading}>
-          {loading ? "Đang cập nhật..." : "Cập nhật phòng khám"}
-        </button>
-      </form>
-    </div>
-  );
-}
+    );
+};
 
 export default ClinicEdit;

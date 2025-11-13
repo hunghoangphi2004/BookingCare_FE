@@ -1,146 +1,162 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { deletePatient, getAllPatient } from "../../../services/patientService";
+import { useNavigate, useLocation } from "react-router-dom";
+import { getAllPatient, deletePatient } from "../../../services/patientService";
+import { Table, Button, Space, Typography, Alert, Modal } from "antd";
 
 function Patients() {
+    const [patients, setPatients] = useState([]);
+    const [pagination, setPagination] = useState({});
+    const [filters, setFilters] = useState({ page: 1, limit: 5 });
+    const [loading, setLoading] = useState(true);
+    const [alert, setAlert] = useState({ type: '', message: '' });
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedPatientId, setSelectedPatientId] = useState(null);
 
-  const [patients, setPatients] = useState([]);
-  const [pagination, setPagination] = useState({});
-  const [filters, setFilters] = useState({ page: 1, limit: 5 });
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+    const navigate = useNavigate();
+    const location = useLocation();
+    const { Title } = Typography;
 
-  const fetchPatients = async (params = filters) => {
-    try {
-      setLoading(true);
-      const res = await getAllPatient(params);
-      console.log(res)
-      if (res.success) {
-        setPatients(res.data);
-        setPagination(res.pagination);
-      } else {
-        console.error(res.message);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchPatients(filters);
-  }, [filters]);
-  
-
-  const handlePageChange = (newPage) => {
-    setFilters((prev) => ({
-      ...prev,
-      page: newPage
-    }));
-  };
-
-  const handleDelete = async (id) => {
-    if (window.confirm("Bạn có chắc muốn xóa bệnh nhân này không?")) {
-      const res = await deletePatient(id);
-      if (res.success) {
-        alert("Xóa thành công!");
-
-        const newTotal = (pagination.total || 0) - 1;
-        const totalPages = Math.ceil(newTotal / (filters.limit || 5));
-        if (filters.page > totalPages && totalPages > 0) {
-          setFilters((prev) => ({ ...prev, page: totalPages }));
-        } else {
-          fetchPatients(filters);
+    useEffect(() => {
+        // Nếu có alert từ create/edit
+        if (location.state?.alert) {
+            setAlert(location.state.alert);
+            navigate(location.pathname, { replace: true });
+            setTimeout(() => setAlert({ type: '', message: '' }), 5000);
         }
+    }, [location, navigate]);
 
-      } else {
-        alert("Lỗi khi xóa!");
-      }
-    }
-  };
+    const fetchPatients = async (params = filters) => {
+        try {
+            setLoading(true);
+            const res = await getAllPatient(params);
+            if (res.success) {
+                setPatients(res.data);
+                setPagination(res.pagination);
+            } else {
+                setAlert({ type: 'error', message: res.message || 'Không lấy được dữ liệu' });
+            }
+        } catch (err) {
+            console.error(err);
+            setAlert({ type: 'error', message: 'Có lỗi xảy ra khi lấy dữ liệu' });
+        } finally {
+            setLoading(false);
+        }
+    };
 
+    useEffect(() => {
+        fetchPatients(filters);
+    }, [filters]);
 
-  if (loading) return <p>Đang tải dữ liệu...</p>;
+    const handlePageChange = (newPage) => {
+        setFilters(prev => ({ ...prev, page: newPage }));
+    };
 
-  return (
-    <>
-      <div>
-        <div className="d-flex justify-content-between align-items-center mb-4">
-          <h2 className="m-0">Danh sách bệnh nhân ({pagination.total || 0})</h2>
-          <button
-            className="btn btn-primary"
-            onClick={() => navigate("/admin/patients/create")}
-          >
-            + Thêm mới
-          </button>
-        </div>
+    // Xóa bệnh nhân
+    const showDeleteModal = (id) => {
+        setSelectedPatientId(id);
+        setIsModalOpen(true);
+    };
 
+    const handleOk = async () => {
+        try {
+            const res = await deletePatient(selectedPatientId);
+            if (res.success) {
+                setAlert({ type: 'success', message: 'Xóa bệnh nhân thành công!' });
+                const newTotal = (pagination.total || 0) - 1;
+                const totalPages = Math.ceil(newTotal / (filters.limit || 5));
+                const newPage = filters.page > totalPages ? totalPages : filters.page;
+                setFilters(prev => ({ ...prev, page: newPage }));
+                setTimeout(() => fetchPatients({ ...filters, page: newPage }), 200);
+            } else {
+                setAlert({ type: 'error', message: res.message || 'Không thể xóa bệnh nhân' });
+            }
+        } catch (err) {
+            setAlert({ type: 'error', message: 'Đã xảy ra lỗi hệ thống' });
+        } finally {
+            setIsModalOpen(false);
+            setSelectedPatientId(null);
+            setTimeout(() => setAlert({ type: '', message: '' }), 5000);
+        }
+    };
 
-        <table className="table table-striped table-bordered mt-3">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Hình ảnh</th>
-              <th>Hỗ trợ viên</th>
-              <th>Mã bệnh nhân</th>
-              <th>Email</th>
-              <th>SĐT</th>
-              <th>Trạng thái</th>
-              <th>Hành động</th>
-            </tr>
-          </thead>
-          <tbody>
-            {patients.map((a, idx) => (
-              <tr key={a._id}>
-                <td>{(filters.page - 1) * (filters.limit || 10) + idx + 1}</td>
-                <td>
-                  <img
-                    style={{ width: 80, borderRadius: 8 }}
-                    src={a.thumbnail}
-                    alt="thumb"
-                  />
-                </td>
-                <td>{a.firstName + ' ' + a.lastName}</td>
-                <td>{a.patientId}</td>
-                <td>{a.userId?.email}</td>
-                <td>{a.phoneNumber}</td>
-                <td>
-                  {a.userId.isActive ? (
-                    <button className="btn btn-success">Đang hoạt động</button>
-                  ) : (
-                    <button className="btn btn-warning">Đã khóa</button>
-                  )}
-                </td>
-                <td>{a.phoneNumber}</td>
-                <td>
-                  <button className="btn btn-success btn-sm me-2" onClick={() => navigate(`/admin/patients/edit/${a._id}`)}>Sửa</button>
-                  <button className="btn btn-danger btn-sm" onClick={() => handleDelete(a._id)}>Xoá</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    const handleCancel = () => {
+        setIsModalOpen(false);
+        setSelectedPatientId(null);
+    };
 
-        {pagination.totalPages > 1 && (
-          <div className="d-flex justify-content-center gap-2 mt-3">
-            {Array.from({ length: pagination.totalPages }).map((_, i) => (
-              <button
-                key={i}
-                onClick={() => handlePageChange(i + 1)}
-                className={`btn ${pagination.page === i + 1
-                  ? "btn-primary"
-                  : "btn-outline-primary"
-                  } btn-sm`}
-              >
-                {i + 1}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-    </>
-  );
+    const columns = [
+        { title: '#', render: (_, __, idx) => (filters.page - 1) * filters.limit + idx + 1 },
+        {
+            title: 'Hình ảnh',
+            dataIndex: 'thumbnail',
+            render: src => <img src={src} alt="thumb" style={{ width: 80, height: 80, borderRadius: 8, objectFit: 'cover' }} />
+        },
+        { title: 'Họ tên', render: r => `${r.firstName} ${r.lastName}` },
+        { title: 'Mã bệnh nhân', dataIndex: 'patientId' },
+        { title: 'Email', render: r => r.userId?.email },
+        { title: 'SĐT', dataIndex: 'phoneNumber' },
+        {
+            title: 'Trạng thái',
+            render: r => r.userId?.isActive
+                ? <Button type="primary" size="small">Đang hoạt động</Button>
+                : <Button danger size="small">Đã khóa</Button>
+        },
+        {
+            title: 'Hành động',
+            render: r => (
+                <Space>
+                    <Button type="primary" size="small" onClick={() => navigate(`/admin/patients/edit/${r._id}`)}>Sửa</Button>
+                    <Button danger size="small" onClick={() => showDeleteModal(r._id)}>Xoá</Button>
+                </Space>
+            )
+        }
+    ];
+
+    return (
+        <>
+            {alert.message && (
+                <Alert
+                    message={alert.message}
+                    type={alert.type}
+                    showIcon
+                    closable
+                    style={{ marginBottom: 16 }}
+                    onClose={() => setAlert({ type: '', message: '' })}
+                />
+            )}
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <Title level={3} style={{ margin: 0 }}>Danh sách bệnh nhân: {pagination.total || 0}</Title>
+                <Button type="primary" onClick={() => navigate("/admin/patients/create")}>Thêm mới</Button>
+            </div>
+
+            <Table
+                columns={columns}
+                dataSource={patients}
+                rowKey={r => r._id}
+                loading={loading}
+                pagination={{
+                    current: pagination.page,
+                    pageSize: filters.limit,
+                    total: pagination.total,
+                    onChange: handlePageChange
+                }}
+                scroll={{ x: 1200 }}
+            />
+
+            <Modal
+                title="Xác nhận xóa"
+                open={isModalOpen}
+                onOk={handleOk}
+                onCancel={handleCancel}
+                okText="Xóa"
+                okType="danger"
+                cancelText="Hủy"
+            >
+                <p>Bạn có chắc muốn xóa bệnh nhân này không?</p>
+            </Modal>
+        </>
+    );
 }
 
 export default Patients;

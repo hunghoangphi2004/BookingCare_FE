@@ -1,15 +1,31 @@
 import { useEffect, useState } from "react";
-import { deleteSupporter, getAllSupporter } from "../../../services/supporterService"
-import { useNavigate } from "react-router-dom";
+import { getAllSupporter, deleteSupporter } from "../../../services/supporterService";
+import { useNavigate, useLocation } from "react-router-dom";
+import { Table, Button, Space, Typography, Alert, Modal } from "antd";
 
 function Supporters() {
-
   const [supporters, setSupporters] = useState([]);
   const [pagination, setPagination] = useState({});
   const [filters, setFilters] = useState({ page: 1, limit: 5 });
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+  const [alert, setAlert] = useState({ type: "", message: "" });
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedSupporterId, setSelectedSupporterId] = useState(null);
 
+  const navigate = useNavigate();
+  const { Title } = Typography;
+  const location = useLocation();
+
+  // 🟢 Hiển thị alert được truyền từ trang khác (sau khi tạo/sửa)
+  useEffect(() => {
+    if (location.state?.alert) {
+      setAlert(location.state.alert);
+      navigate(location.pathname, { replace: true });
+      setTimeout(() => setAlert({ type: "", message: "" }), 5000);
+    }
+  }, [location, navigate]);
+
+  // 🟢 Fetch danh sách supporter
   const fetchSupporters = async (params = filters) => {
     try {
       setLoading(true);
@@ -19,10 +35,11 @@ function Supporters() {
         setSupporters(res.data);
         setPagination(res.pagination);
       } else {
-        console.error(res.message);
+        setAlert({ type: "error", message: res.message || "Không lấy được danh sách hỗ trợ viên!" });
       }
     } catch (err) {
       console.error(err);
+      setAlert({ type: "error", message: "Lỗi hệ thống khi tải dữ liệu!" });
     } finally {
       setLoading(false);
     }
@@ -32,109 +49,147 @@ function Supporters() {
     fetchSupporters(filters);
   }, [filters]);
 
-  const handlePageChange = (newPage) => {
-    setFilters((prev) => ({
-      ...prev,
-      page: newPage
-    }));
+  // 🟢 Modal xác nhận xóa
+  const showDeleteModal = (id) => {
+    setSelectedSupporterId(id);
+    setIsModalOpen(true);
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm("Bạn có chắc muốn xóa hỗ trợ viên này không?")) {
-      const res = await deleteSupporter(id);
+  const handleOk = async () => {
+    try {
+      const res = await deleteSupporter(selectedSupporterId);
       if (res.success) {
-        alert("Xóa thành công!");
-
+        setAlert({ type: "success", message: "Xóa hỗ trợ viên thành công!" });
         const newTotal = (pagination.total || 0) - 1;
         const totalPages = Math.ceil(newTotal / (filters.limit || 5));
-        if (filters.page > totalPages && totalPages > 0) {
-          setFilters((prev) => ({ ...prev, page: totalPages }));
-        } else {
-          fetchSupporters(filters);
-        }
-
+        const newPage = filters.page > totalPages ? totalPages : filters.page;
+        setFilters((prev) => ({ ...prev, page: newPage }));
+        setTimeout(() => fetchSupporters({ ...filters, page: newPage }), 200);
       } else {
-        alert("Lỗi khi xóa!");
+        setAlert({ type: "error", message: res.message || "Không thể xóa hỗ trợ viên!" });
       }
+    } catch (err) {
+      setAlert({ type: "error", message: "Đã xảy ra lỗi khi xóa!" });
+    } finally {
+      setIsModalOpen(false);
+      setSelectedSupporterId(null);
+      setTimeout(() => setAlert({ type: "", message: "" }), 5000);
     }
   };
 
+  const handleCancel = () => {
+    setIsModalOpen(false);
+    setSelectedSupporterId(null);
+  };
 
-  if (loading) return <p>Đang tải dữ liệu...</p>;
+  // 🟢 Cấu hình bảng
+  const columns = [
+    {
+      title: "#",
+      render: (_, __, idx) => (filters.page - 1) * filters.limit + idx + 1,
+    },
+    {
+      title: "Ảnh đại diện",
+      dataIndex: "thumbnail",
+      render: (src) =>
+        src ? (
+          <img
+            src={src}
+            alt="thumb"
+            style={{
+              width: 80,
+              height: 80,
+              borderRadius: 8,
+              objectFit: "cover",
+            }}
+          />
+        ) : (
+          "—"
+        ),
+    },
+    { title: "Tên hỗ trợ viên", dataIndex: "name" },
+    { title: "Email", render: (r) => r.userId?.email || "—" },
+    { title: "SĐT", dataIndex: "phoneNumber" },
+    {
+      title: "Hành động",
+      render: (r) => (
+        <Space>
+          <Button
+            type="primary"
+            size="small"
+            onClick={() => navigate(`/admin/supporters/edit/${r._id}`)}
+          >
+            Sửa
+          </Button>
+          <Button danger size="small" onClick={() => showDeleteModal(r._id)}>
+            Xóa
+          </Button>
+        </Space>
+      ),
+    },
+  ];
 
   return (
     <>
-      <div>
-        <div className="d-flex justify-content-between align-items-center mb-4">
-          <h2 className="m-0">Danh sách hỗ trợ viên ({pagination.total || 0})</h2>
-          <button
-            className="btn btn-primary"
-            onClick={() => navigate("/admin/supporters/create")}
-          >
-            + Thêm mới
-          </button>
-        </div>
+      {/* 🟡 Alert hiển thị thông báo */}
+      {alert.message && (
+        <Alert
+          message={alert.message}
+          type={alert.type}
+          showIcon
+          closable
+          onClose={() => setAlert({ type: "", message: "" })}
+          style={{ marginBottom: 16 }}
+        />
+      )}
 
-
-        <table className="table table-striped table-bordered mt-3">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Hình ảnh</th>
-              <th>Hỗ trợ viên</th>
-              <th>Email</th>
-              <th>SĐT</th>
-              <th>Trạng thái</th>
-              <th>Hành động</th>
-            </tr>
-          </thead>
-          <tbody>
-            {supporters.map((a, idx) => (
-              <tr key={a._id}>
-                <td>{(filters.page - 1) * (filters.limit || 10) + idx + 1}</td>
-                <td>
-                  <img
-                    style={{ width: 80, borderRadius: 8 }}
-                    src={a.thumbnail}
-                    alt="thumb"
-                  />
-                </td>
-                <td>{a.name}</td>
-                <td>{a.userId?.email}</td>
-                <td>{a.phoneNumber}</td>
-                <td>
-                  {a.userId.isActive ? (
-                    <button className="btn btn-success">Đang hoạt động</button>
-                  ) : (
-                    <button className="btn btn-warning">Đã khóa</button>
-                  )}
-                </td>
-                <td>
-                  <button className="btn btn-success btn-sm me-2" onClick={() => navigate(`/admin/supporters/edit/${a._id}`)}>Sửa</button>
-                  <button className="btn btn-danger btn-sm" onClick={() => handleDelete(a._id)}>Xoá</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {pagination.totalPages > 1 && (
-          <div className="d-flex justify-content-center gap-2 mt-3">
-            {Array.from({ length: pagination.totalPages }).map((_, i) => (
-              <button
-                key={i}
-                onClick={() => handlePageChange(i + 1)}
-                className={`btn ${pagination.page === i + 1
-                  ? "btn-primary"
-                  : "btn-outline-primary"
-                  } btn-sm`}
-              >
-                {i + 1}
-              </button>
-            ))}
-          </div>
-        )}
+      {/* 🟢 Tiêu đề + Nút thêm */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 16,
+        }}
+      >
+        <Title level={3} style={{ margin: 0 }}>
+          Danh sách hỗ trợ viên: {pagination.total || 0}
+        </Title>
+        <Button
+          type="primary"
+          onClick={() => navigate("/admin/supporters/create")}
+        >
+          Thêm mới
+        </Button>
       </div>
+
+      {/* 🟢 Bảng danh sách */}
+      <Table
+        columns={columns}
+        dataSource={supporters}
+        rowKey={(r) => r._id}
+        loading={loading}
+        pagination={{
+          current: pagination.page,
+          pageSize: filters.limit,
+          total: pagination.total,
+          onChange: (page) => setFilters((prev) => ({ ...prev, page })),
+        }}
+        scroll={{ x: 1000 }}
+      />
+
+      {/* 🟢 Modal xác nhận xóa */}
+      <Modal
+        title="Xác nhận xóa"
+        open={isModalOpen}
+        onOk={handleOk}
+        onCancel={handleCancel}
+        okText="Xóa"
+        okType="danger"
+        cancelText="Hủy"
+      >
+        <p>Bạn có chắc muốn xóa hỗ trợ viên này không?</p>
+      </Modal>
     </>
   );
 }

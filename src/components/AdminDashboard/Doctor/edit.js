@@ -1,266 +1,164 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getDoctorById, updateDoctor } from "../../../services/doctorService";
-import { getAllClinic } from "../../../services/clinicService";
 import { getAllSpec } from "../../../services/specializationService";
+import { getAllClinic } from "../../../services/clinicService";
+import { Form, Input, Button, Select, InputNumber, Upload, notification } from "antd";
+import { UploadOutlined } from "@ant-design/icons";
 
-export default function EditDoctor() {
+const EditDoctor = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-
-    const [formData, setFormData] = useState({
-        email: "",
-        password: "",
-        licenceNumber: "",
-        experience: "",
-        name: "",
-        consultationFee: "",
-        phoneNumber: "",
-        clinicId: "",
-        specializationId: "",
-    });
-
-    const [clinics, setClinics] = useState([]);
-    const [specializations, setSpecializations] = useState([]);
-    const [thumbnail, setThumbnail] = useState(null);
+    const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
-    const [oldDoctor, setOldDoctor] = useState(null);
+    const [thumbnail, setThumbnail] = useState(null);
+    const [oldThumbnail, setOldThumbnail] = useState(null);
+    const [specializations, setSpecializations] = useState([]);
+    const [clinics, setClinics] = useState([]);
 
-    // Lấy dữ liệu bác sĩ
+    // Lấy dữ liệu bác sĩ + danh sách chuyên khoa, phòng khám
     useEffect(() => {
-        const fetchDataDoctor = async () => {
+        const fetchDoctor = async () => {
             try {
-                const doctor = await getDoctorById(id);
-                console.log(doctor)
-                if (doctor.data) {
-                    setOldDoctor(doctor.data);
-                    setFormData({
-                        email: doctor.data.userId?.email || "",
+                const res = await getDoctorById(id);
+                if (res.data) {
+                    const doc = res.data;
+                    setOldThumbnail(doc.thumbnail);
+                    form.setFieldsValue({
+                        email: doc.userId?.email || "",
                         password: "",
-                        licenceNumber: doctor.data.licenseNumber || "",
-                        experience: doctor.data.experience || "",
-                        name: doctor.data.name || "",
-                        consultationFee: doctor.data.consultationFee || "",
-                        phoneNumber: doctor.data.phoneNumber || "",
-                        clinicId: doctor.data.clinicId?._id || "",
-                        specializationId: doctor.data.specializationId?._id || "",
+                        name: doc.name || "",
+                        licenseNumber: doc.licenseNumber || "",
+                        experience: doc.experience || 0,
+                        consultationFee: doc.consultationFee || 0,
+                        phoneNumber: doc.phoneNumber || "",
+                        clinicId: doc.clinicId?._id || "",
+                        specializationId: doc.specializationId?._id || "",
                     });
                 }
-            } catch (error) {
-                console.error("Lỗi khi tải dữ liệu:", error);
+            } catch (err) {
+                console.error(err);
+                notification.error({ message: "Lỗi hệ thống", description: "Không thể tải thông tin bác sĩ" });
             }
         };
-        fetchDataDoctor();
-    }, [id]);
 
-    useEffect(() => {
-        const fetchClinics = async () => {
+        const fetchData = async () => {
             try {
-                const response = await getAllClinic();
-                setClinics(response.data || []);
-            } catch (error) {
-                console.error("Lỗi khi tải danh sách phòng khám:", error);
+                const specRes = await getAllSpec();
+                const clinicRes = await getAllClinic();
+                setSpecializations(specRes?.data || []);
+                setClinics(clinicRes?.data || []);
+            } catch (err) {
+                console.error(err);
+                notification.error({ message: "Lỗi hệ thống", description: "Không thể tải dữ liệu" });
             }
         };
-        fetchClinics();
-    }, []);
 
-    useEffect(() => {
-        const fetchSpecializations = async () => {
-            try {
-                const response = await getAllSpec();
-                setSpecializations(response.data || []);
-            } catch (error) {
-                console.error("Lỗi khi tải danh sách chuyên khoa:", error);
+        fetchDoctor();
+        fetchData();
+    }, [id, form]);
+
+    const handleSubmit = async (values) => {
+        setLoading(true);
+        try {
+            const formData = new FormData();
+            Object.entries(values).forEach(([key, value]) => formData.append(key, value));
+            if (thumbnail) formData.append("thumbnail", thumbnail);
+
+            const res = await updateDoctor(id, formData);
+            if (res.success) {
+                navigate("/admin/doctors", {
+                    state: {
+                        alert: {
+                            type: "success",
+                            message: "Cập nhật bác sĩ thành công!"
+                        }
+                    }
+                });
+            } else {
+                notification.error({ message: "Lỗi", description: res.message || "Không thể cập nhật bác sĩ!" });
             }
-        };
-        fetchSpecializations();
-    }, []);
-
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-
-        const form = new FormData();
-        Object.entries(formData).forEach(([key, value]) => {
-            form.append(key, value);
-        });
-        if (thumbnail) form.append("thumbnail", thumbnail);
-
-        const res = await updateDoctor(id, form);
-        if (res.success) {
-            alert("Cập nhật bác sĩ thành công!");
-            navigate("/admin/doctors");
-        } else {
-            alert(res.message || "Lỗi khi cập nhật bác sĩ");
+        } catch (err) {
+            console.error(err);
+            notification.error({ message: "Lỗi hệ thống", description: "Đã xảy ra lỗi. Vui lòng thử lại!" });
+        } finally {
+            setLoading(false);
         }
     };
 
-
-    if (!oldDoctor) return <p className="text-center mt-5">Đang tải dữ liệu...</p>;
-
     return (
         <div className="container mt-4">
-            <h3>Sửa thông tin bác sĩ</h3>
-            <form onSubmit={handleSubmit}>
-                {/* Email */}
-                <div className="mb-3">
-                    <label>Email</label>
-                    <input
-                        type="email"
-                        name="email"
-                        className="form-control"
-                        value={formData.email}
-                        onChange={handleChange}
-                        required
-                    />
-                </div>
+            <h2 className="mb-4">Sửa bác sĩ</h2>
 
-                {/* Mật khẩu */}
-                <div className="mb-3">
-                    <label>Mật khẩu</label>
-                    <input
-                        type="password"
-                        name="password"
-                        className="form-control"
-                        value={formData.password}
-                        onChange={handleChange}
-                    />
-                </div>
+            <Form
+                form={form}
+                layout="vertical"
+                onFinish={handleSubmit}
+                style={{ maxWidth: 700 }}
+            >
+                <Form.Item label="Email" name="email" rules={[{ required: true, message: "Vui lòng nhập email!" }]}>
+                    <Input type="email" />
+                </Form.Item>
 
-                {/* Tên bác sĩ */}
-                <div className="mb-3">
-                    <label>Tên bác sĩ</label>
-                    <input
-                        type="text"
-                        name="name"
-                        className="form-control"
-                        value={formData.name}
-                        onChange={handleChange}
-                        required
-                    />
-                </div>
+                <Form.Item label="Mật khẩu" name="password">
+                    <Input.Password placeholder="Để trống nếu không đổi" />
+                </Form.Item>
 
-                {/* Giấy phép */}
-                <div className="mb-3">
-                    <label>Giấy phép hành nghề</label>
-                    <input
-                        type="text"
-                        name="licenceNumber"
-                        className="form-control"
-                        value={formData.licenceNumber}
-                        onChange={handleChange}
-                    />
-                </div>
+                <Form.Item label="Tên bác sĩ" name="name" rules={[{ required: true, message: "Vui lòng nhập tên bác sĩ!" }]}>
+                    <Input />
+                </Form.Item>
 
-                {/* Kinh nghiệm */}
-                <div className="mb-3">
-                    <label>Kinh nghiệm (năm)</label>
-                    <input
-                        type="number"
-                        name="experience"
-                        className="form-control"
-                        value={formData.experience}
-                        onChange={handleChange}
-                    />
-                </div>
+                <Form.Item label="Giấy phép hành nghề" name="licenseNumber">
+                    <Input />
+                </Form.Item>
 
-                {/* Phí tư vấn */}
-                <div className="mb-3">
-                    <label>Phí tư vấn</label>
-                    <input
-                        type="number"
-                        name="consultationFee"
-                        className="form-control"
-                        value={formData.consultationFee}
-                        onChange={handleChange}
-                    />
-                </div>
+                <Form.Item label="Kinh nghiệm (năm)" name="experience">
+                    <InputNumber min={0} style={{ width: "100%" }} />
+                </Form.Item>
 
-                {/* Số điện thoại */}
-                <div className="mb-3">
-                    <label>Số điện thoại</label>
-                    <input
-                        type="text"
-                        name="phoneNumber"
-                        className="form-control"
-                        value={formData.phoneNumber}
-                        onChange={handleChange}
-                    />
-                </div>
+                <Form.Item label="Phí tư vấn (VNĐ)" name="consultationFee">
+                    <InputNumber min={0} style={{ width: "100%" }} />
+                </Form.Item>
 
-                {/* Dropdown phòng khám */}
-                <div className="mb-3">
-                    <label>Phòng khám</label>
-                    <select
-                        name="clinicId"
-                        className="form-select"
-                        value={formData.clinicId}
-                        onChange={handleChange}
+                <Form.Item label="Số điện thoại" name="phoneNumber">
+                    <Input />
+                </Form.Item>
+
+                <Form.Item label="Phòng khám" name="clinicId">
+                    <Select placeholder="-- Chọn phòng khám --">
+                        {clinics.map(c => <Select.Option key={c._id} value={c._id}>{c.name}</Select.Option>)}
+                    </Select>
+                </Form.Item>
+
+                <Form.Item label="Chuyên khoa" name="specializationId">
+                    <Select placeholder="-- Chọn chuyên khoa --">
+                        {specializations.map(s => <Select.Option key={s._id} value={s._id}>{s.name}</Select.Option>)}
+                    </Select>
+                </Form.Item>
+
+                <Form.Item label="Ảnh bác sĩ">
+                    <Upload
+                        beforeUpload={(file) => { setThumbnail(file); return false; }}
+                        showUploadList={false}
                     >
-                        <option value="">-- Chọn phòng khám --</option>
-                        {clinics.map((c) => (
-                            <option key={c._id} value={c._id}>
-                                {c.name}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-
-                {/* Dropdown chuyên khoa */}
-                <div className="mb-3">
-                    <label>Chuyên khoa</label>
-                    <select
-                        name="specializationId"
-                        className="form-select"
-                        value={formData.specializationId}
-                        onChange={handleChange}
-                    >
-                        <option value="">-- Chọn chuyên khoa --</option>
-                        {specializations.map((s) => (
-                            <option key={s._id} value={s._id}>
-                                {s.name}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-
-                {/* Ảnh */}
-                <div className="mb-3">
-                    <label>Ảnh bác sĩ</label>
-                    <input
-                        type="file"
-                        accept="image/*"
-                        className="form-control"
-                        onChange={(e) => setThumbnail(e.target.files[0])}
-                    />
+                        <Button icon={<UploadOutlined />}>Chọn ảnh</Button>
+                    </Upload>
                     {thumbnail ? (
-                        <img
-                            src={URL.createObjectURL(thumbnail)}
-                            alt="preview"
-                            width="100"
-                            className="mt-2"
-                        />
-                    ) : (
-                        oldDoctor?.thumbnail && (
-                            <img
-                                src={oldDoctor.thumbnail}
-                                alt="old doctor"
-                                width="100"
-                                className="mt-2"
-                            />
-                        )
-                    )}
-                </div>
+                        <img src={URL.createObjectURL(thumbnail)} alt="preview" width={100} style={{ marginTop: 10 }} />
+                    ) : oldThumbnail ? (
+                        <img src={oldThumbnail} alt="old doctor" width={100} style={{ marginTop: 10 }} />
+                    ) : null}
+                </Form.Item>
 
-                <button type="submit" className="btn btn-primary" disabled={loading}>
-                    {loading ? "Đang lưu..." : "Lưu thay đổi"}
-                </button>
-            </form>
+                <Form.Item>
+                    <Button type="primary" htmlType="submit" loading={loading} style={{ marginRight: 8 }}>
+                        Lưu thay đổi
+                    </Button>
+                    <Button onClick={() => navigate("/admin/doctors")}>Hủy</Button>
+                </Form.Item>
+            </Form>
         </div>
     );
-}
+};
+
+export default EditDoctor;
