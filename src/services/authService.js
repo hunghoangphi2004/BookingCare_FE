@@ -2,12 +2,20 @@ import { post,postAdmin, get, getInclude } from "../utils/request";
 
 export const loginAdmin = async (payload) => {
   try {
-    return await postAdmin("/admin/auth/login", payload);
+    const response = await fetch(API_DOMAIN + "/admin/auth/login", {
+      method: "POST",
+      credentials: "include",   
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const result = await response.json();
+    return result;
   } catch (error) {
     console.error("Login error:", error);
     throw error;
   }
 };
+
 
 export const login = async (payload) => {
   try {
