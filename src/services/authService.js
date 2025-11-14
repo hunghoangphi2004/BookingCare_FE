@@ -1,4 +1,5 @@
 import { post,postAdmin, get, getInclude } from "../utils/request";
+const API_DOMAIN = process.env.REACT_APP_API_DOMAIN || "http://localhost:3000";
 
 export const loginAdmin = async (payload) => {
   try {
