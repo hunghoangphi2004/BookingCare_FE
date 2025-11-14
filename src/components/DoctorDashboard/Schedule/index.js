@@ -1,7 +1,20 @@
 import { useEffect, useState } from "react";
-import Cookies from "js-cookie";
+import {
+  DatePicker,
+  Button,
+  Tag,
+  Card,
+  Alert,
+  Spin,
+  Typography,
+  Space,
+  message as AntMessage,
+} from "antd";
 import { createSchedule } from "../../../services/scheduleService";
 import { getProfileAdmin } from "../../../services/authService";
+import dayjs from "dayjs";
+
+const { Title, Text } = Typography;
 
 function ScheduleDoctor() {
   const [selectedDate, setSelectedDate] = useState("");
@@ -9,26 +22,26 @@ function ScheduleDoctor() {
   const [doctorId, setDoctorId] = useState("");
   const [doctorName, setDoctorName] = useState("");
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successAlert, setSuccessAlert] = useState("");
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         const data = await getProfileAdmin();
-        console.log(data)
         if (data) {
           if (data.role === "doctor") {
             setDoctorId(data.doctorProfile._id);
             setDoctorName(data.doctorProfile.name);
           } else {
-            setMessage("❌ Tài khoản này không phải bác sĩ!");
+            setErrorMessage("❌ Tài khoản này không phải bác sĩ!");
           }
         } else {
-          setMessage("❌ Không tìm thấy thông tin đăng nhập, vui lòng đăng nhập lại!");
+          setErrorMessage("❌ Không tìm thấy thông tin đăng nhập, vui lòng đăng nhập lại!");
         }
       } catch (error) {
         console.error("Lỗi khi lấy profile:", error);
-        setMessage("⚠️ Lỗi khi lấy thông tin tài khoản!");
+        setErrorMessage("⚠️ Lỗi khi lấy thông tin tài khoản!");
       }
     };
 
@@ -38,20 +51,21 @@ function ScheduleDoctor() {
   const handleClickTime = (item) => {
     setSelectedTime((prev) => {
       const isSelected = prev.includes(item);
-      return isSelected
-        ? prev.filter((t) => t !== item)
-        : [...prev, item];
+      return isSelected ? prev.filter((t) => t !== item) : [...prev, item];
     });
   };
 
-  const handleChangeDate = (e) => {
-    const [year, month, day] = e.target.value.split("-");
-    setSelectedDate(`${day}/${month}/${year}`);
+  const handleChangeDate = (date) => {
+    if (!date) {
+      setSelectedDate("");
+      return;
+    }
+    setSelectedDate(dayjs(date).format("DD/MM/YYYY"));
   };
 
   const handleCreateSchedule = async () => {
     if (!doctorId || !selectedDate || selectedTime.length === 0) {
-      setMessage("Vui lòng chọn ngày và giờ trước khi tạo lịch!");
+      AntMessage.error("Vui lòng chọn ngày và giờ trước khi tạo lịch!");
       return;
     }
 
@@ -64,15 +78,24 @@ function ScheduleDoctor() {
     try {
       setLoading(true);
       const result = await createSchedule(payload);
+
       if (result.success) {
-        setMessage("✅ Tạo lịch thành công!");
+        AntMessage.success("Tạo lịch thành công!");
+        setSuccessAlert("Tạo lịch thành công!");
         setSelectedTime([]);
+
+        // Auto hide alert sau 3 giây
+        setTimeout(() => {
+          setSuccessAlert("");
+        }, 3000);
       } else {
-        setMessage(result.message || "Tạo lịch thất bại!");
+        AntMessage.error(result.message || "Tạo lịch thất bại!");
+        setSuccessAlert("");
       }
     } catch (error) {
       console.error(error);
-      setMessage("Có lỗi xảy ra khi tạo lịch!");
+      AntMessage.error("Có lỗi xảy ra khi tạo lịch!");
+      setSuccessAlert("");
     } finally {
       setLoading(false);
     }
@@ -85,45 +108,92 @@ function ScheduleDoctor() {
     "15:00-15:30", "15:30-16:00", "16:00-16:30", "16:30-17:00",
   ];
 
-  return (
-    <div className="container mt-3">
-      <p>Vui lòng chọn ngày và khung giờ để tạo lịch khám</p>
+  if (!doctorId && !errorMessage) return <Spin style={{ marginTop: 40 }} />;
 
-      <div className="mb-3">
-        <label htmlFor="date" className="form-label fw-bold">Chọn ngày:</label>
-        <input
-          type="date"
-          id="date"
-          className="form-control"
-          style={{ width: "auto" }}
+  return (
+    <Card
+      style={{
+        maxWidth: 700,
+        margin: "20px auto",
+        borderRadius: 12,
+        padding: 20,
+      }}
+    >
+      <Title level={4}>Tạo lịch khám</Title>
+
+      {doctorName && (
+        <Alert
+          message={`Bác sĩ: ${doctorName}`}
+          type="info"
+          style={{ marginBottom: 16 }}
+        />
+      )}
+
+      {errorMessage && (
+        <Alert
+          type="error"
+          message={errorMessage}
+          showIcon
+          style={{ marginBottom: 16 }}
+        />
+      )}
+
+      {/* Chọn ngày */}
+      <div style={{ marginBottom: 20 }}>
+        <Text strong>Chọn ngày:</Text>
+        <br />
+        <DatePicker
+          format="DD/MM/YYYY"
           onChange={handleChangeDate}
+          style={{ marginTop: 6 }}
         />
       </div>
 
-      <h6 className="fw-bold">Chọn khung giờ:</h6>
-      {timeArr.map((item, index) => (
-        <button
-          key={index}
-          value={item}
-          className={`btn m-1 ${selectedTime.includes(item) ? "btn-primary" : "btn-outline-primary"}`}
-          onClick={() => handleClickTime(item)}
-        >
-          {item}
-        </button>
-      ))}
+      {/* Chọn giờ */}
+      <Text strong>Chọn khung giờ:</Text>
 
-      <div>
-        <button
-          className="btn btn-success mt-3"
-          onClick={handleCreateSchedule}
-          disabled={loading || !selectedDate || selectedTime.length === 0}
-        >
-          {loading ? "Đang tạo..." : "Tạo lịch"}
-        </button>
+      <div style={{ marginTop: 10, marginBottom: 20 }}>
+        {timeArr.map((item, index) => {
+          const isSelected = selectedTime.includes(item);
+          return (
+            <Tag.CheckableTag
+              key={index}
+              checked={isSelected}
+              onChange={() => handleClickTime(item)}
+              style={{
+                padding: "8px 14px",
+                fontSize: 14,
+                borderRadius: 6,
+                margin: 6,
+              }}
+            >
+              {item}
+            </Tag.CheckableTag>
+          );
+        })}
       </div>
 
-      {message && <div className="alert alert-info mt-3">{message}</div>}
-    </div>
+      <Space>
+        <Button
+          type="primary"
+          loading={loading}
+          disabled={!selectedDate || selectedTime.length === 0}
+          onClick={handleCreateSchedule}
+        >
+          Tạo lịch
+        </Button>
+      </Space>
+
+      {/* Alert thành công */}
+      {successAlert && (
+        <Alert
+          type="success"
+          message={successAlert}
+          showIcon
+          style={{ marginTop: 16 }}
+        />
+      )}
+    </Card>
   );
 }
 

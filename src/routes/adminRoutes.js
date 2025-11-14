@@ -25,8 +25,10 @@ import PrescriptionEdit from "../components/AdminDashboard/Prescription/edit";
 import Families from "../components/AdminDashboard/Family";
 import FamilyDetail from "../components/AdminDashboard/Family/detail";
 import ProfilePage from "../components/Profile";
+import Dashboard from "../components/AdminDashboard/Dashboard";
 
 export const adminRoutes = [
+  { path: "dashboard", element: <Dashboard /> },
   { path: "schedules", element: <Schedule /> },
   { path: "doctors", element: <Doctors /> },
   { path: "doctors/create", element: <DoctorCreate /> },

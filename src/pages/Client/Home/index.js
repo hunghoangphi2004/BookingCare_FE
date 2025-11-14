@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { getAllClinic, getAllSpecialization, getAllDoctor } from "../../../services/homeService";
 import { useNavigate } from "react-router-dom";
-import './home.scss'
 
 function Home() {
     const [dataHomePage, setDataHomePage] = useState({
@@ -53,7 +52,7 @@ function Home() {
 
     return (
         <>
-            <section className="services">
+            {/* <section className="services">
                 <h2 className="services__title">
                     Nền tảng đặt lịch khám bệnh, chăm sóc răng miệng và làm đẹp
                 </h2>
@@ -96,7 +95,7 @@ function Home() {
                         </button>
                     </form>
                 </div>
-            </section>
+            </section> */}
 
 
             <section className="features">
@@ -106,58 +105,26 @@ function Home() {
                             <h2>Bạn đang tìm kiếm gì?</h2>
                         </div>
                         <div className="row d-flex justify-content-around">
-                            <div className="col-3 for-you__item">
+                            <div className="col-12 col-md-6 col-lg-3 for-you__item">
                                 <div className="for-you__item-image">
                                     <img src="doctor-07.png" alt="Cơ sở y tế" />
+                                    <h3 className="mt-4">Cơ sở y tế</h3>
                                 </div>
 
-                                <h3 className="mt-4">Cơ sở y tế</h3>
                             </div>
-                            <div className="col-3 for-you__item">
+                            <div className="col-12 col-md-6 col-lg-3 for-you__item">
                                 <div className="for-you__item-image">
                                     <img src="header-cover.jpg" alt="Bác sĩ" />
+
+                                    <h3 className="mt-4">Bác sĩ</h3>
                                 </div>
 
-                                <h3 className="mt-4">Bác sĩ</h3>
                             </div>
-                            <div className="col-3 for-you__item">
+                            <div className="col-12 col-md-6 col-lg-3 for-you__item">
                                 <div className="for-you__item-image">
                                     <img src="for-doctors.jpg" alt="Chuyên khoa" />
+                                    <h3 className="mt-4">Chuyên khoa</h3>
                                 </div>
-
-                                <h3 className="mt-4">Chuyên khoa</h3>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="comprehensive">
-                        <div className="comprehensive__title">
-                            Dịch vụ toàn diện
-                        </div>
-                        <div className="row comprehensive__menu d-flex justify-content-around">
-                            <div className="col-5 comprehensive__item d-flex align-items-center">
-                                <div className="comprehensive__image">
-                                    <img src='khamchuyenkhoa.png' alt='Khám chuyên khoa' />
-                                </div>
-                                <h3>Khám chuyên khoa</h3>
-                            </div>
-                            <div className="col-5 comprehensive__item d-flex align-items-center">
-                                <div className="comprehensive__image">
-                                    <img src='khamnhakhoa.png' alt='Khám nha khoa' />
-                                </div>
-                                <h3>Khám nha khoa</h3>
-                            </div>
-                            <div className="col-5 comprehensive__item d-flex align-items-center">
-                                <div className="comprehensive__image">
-                                    <img src='khamtongquat.png' alt='Khám tổng quát' />
-                                </div>
-                                <h3>Khám tổng quát</h3>
-                            </div>
-                            <div className="col-5 comprehensive__item d-flex align-items-center">
-                                <div className="comprehensive__image">
-                                    <img src='khamtieuduong.png' alt='Khám tiểu đường' />
-                                </div>
-                                <h3>Khám tiểu đường</h3>
                             </div>
                         </div>
                     </div>
@@ -169,7 +136,7 @@ function Home() {
                         </div>
                         <div className="row specialization__menu d-flex justify-content-around">
                             {dataHomePage.specializations && dataHomePage.specializations.slice(0, 3).map((specialization) => (
-                                <div key={specialization._id} className="col-3 specialization__item">
+                                <div key={specialization._id} className="col-12 col-md-5 col-lg-3 specialization__item">
                                     <div className="specialization__image">
                                         <img
                                             src={specialization.image || 'khamnhakhoa.png'}
@@ -193,7 +160,7 @@ function Home() {
                         </div>
                         <div className="row clinic__menu d-flex justify-content-around">
                             {dataHomePage.clinics && dataHomePage.clinics.slice(0, 3).map((clinic) => (
-                                <div key={clinic._id} className="col-3 clinic__item">
+                                <div key={clinic._id} className="col-12 col-md-5 col-lg-3 clinic__item">
                                     <div className="clinic__image">
                                         <img
                                             src={clinic.image || 'cosoyte.png'}
@@ -221,7 +188,7 @@ function Home() {
                         </div>
                         <div className="row doctor__menu d-flex justify-content-around">
                             {dataHomePage.doctors && dataHomePage.doctors.slice(0, 3).map((doctor) => (
-                                <div key={doctor._id} className="col-3 doctor__item" onClick={() => handleDoctorClick(doctor.slug)} style={{ cursor: 'pointer' }}>
+                                <div key={doctor._id} className="col-12 col-md-5 col-lg-3 doctor__item" onClick={() => handleDoctorClick(doctor.slug)} style={{ cursor: 'pointer' }}>
                                     <div className="doctor__image">
                                         <img
                                             src={doctor.thumbnail || 'bacsi.png'}
@@ -292,15 +259,15 @@ function Home() {
                             <h2>Bài viết</h2>
                         </div>
                         <div className="row">
-                            <div className="col-4 post__item">
+                            <div className="col-12 col-md-6 col-lg-4 post__item">
                                 <img src="surgery.jpg" alt="Cơ sở y tế" />
                                 <h3 className="mt-4">Được quan tâm</h3>
                             </div>
-                            <div className="col-4 post__item">
+                            <div className="col-12 col-md-6 col-lg-4 post__item">
                                 <img src="otolaryngology.jpg" alt="Bác sĩ" />
                                 <h3 className="mt-4">Y tế nổi bật</h3>
                             </div>
-                            <div className="col-4 post__item">
+                            <div className="col-12 col-md-6 col-lg-4 post__item">
                                 <img src="medicine.jpg" alt="Chuyên khoa" />
                                 <h3 className="mt-4">Bài viết liên quan</h3>
                             </div>

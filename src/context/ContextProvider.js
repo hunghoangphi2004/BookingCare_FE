@@ -1,5 +1,4 @@
 import { createContext, useContext, useState } from "react"
-import Cookie from 'js-cookie'
 const StateContext = createContext();
 
 

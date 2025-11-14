@@ -6,6 +6,20 @@ import {
   cancelFamilyDoctor,
 } from "../../../services/familyService";
 
+import {
+  Table,
+  Tag,
+  Button,
+  Modal,
+  Input,
+  Pagination,
+  Typography,
+  Space,
+  message,
+} from "antd";
+
+const { Title } = Typography;
+
 function RequestFamilyDoctorDashboard() {
   const [requests, setRequests] = useState([]);
   const [filters, setFilters] = useState({ page: 1, limit: 10 });
@@ -16,6 +30,7 @@ function RequestFamilyDoctorDashboard() {
     try {
       setLoading(true);
       const res = await getAllFamilyRequests(filters, filters.page, filters.limit);
+
       if (res.success) {
         setRequests(res.data);
         setPagination(res.pagination);
@@ -30,142 +45,196 @@ function RequestFamilyDoctorDashboard() {
   const handleApprove = async (familyId, doctorRequestId) => {
     try {
       await approveFamilyDoctor(familyId, doctorRequestId);
-      alert("✅ Đã duyệt yêu cầu thành công!");
+      message.success("Đã duyệt yêu cầu thành công!");
       fetchRequests();
     } catch (err) {
       console.error(err);
-      alert("❌ Lỗi khi duyệt yêu cầu");
+      message.error("Lỗi khi duyệt yêu cầu");
     }
   };
 
   const handleReject = async (familyId, doctorRequestId) => {
-    const reason = prompt("Nhập lý do từ chối:");
-    if (!reason) return;
-    try {
-      await rejectFamilyDoctor(familyId, doctorRequestId, reason);
-      alert("🚫 Đã từ chối yêu cầu");
-      fetchRequests();
-    } catch (err) {
-      console.error(err);
-      alert("❌ Lỗi khi từ chối yêu cầu");
-    }
+    Modal.confirm({
+      title: "Nhập lý do từ chối",
+      content: <Input id="rejectReason" placeholder="Lý do..." />,
+      okText: "Xác nhận",
+      cancelText: "Hủy",
+      onOk: async () => {
+        const reason = document.getElementById("rejectReason").value;
+        if (!reason) return message.warning("Vui lòng nhập lý do!");
+
+        try {
+          await rejectFamilyDoctor(familyId, doctorRequestId, reason);
+          message.success("Đã từ chối yêu cầu");
+          fetchRequests();
+        } catch (err) {
+          console.error(err);
+          message.error("Lỗi khi từ chối yêu cầu");
+        }
+      },
+    });
   };
 
   const handleCancel = async (familyId, doctorRequestId) => {
-    if (!window.confirm("Bạn có chắc muốn hủy yêu cầu này không?")) return;
-    try {
-      await cancelFamilyDoctor(familyId, doctorRequestId);
-      alert("🟡 Đã hủy yêu cầu");
-      fetchRequests();
-    } catch (err) {
-      console.error(err);
-      alert("❌ Lỗi khi hủy yêu cầu");
-    }
+    Modal.confirm({
+      title: "Bạn có chắc muốn hủy yêu cầu này không?",
+      okText: "Hủy yêu cầu",
+      okType: "danger",
+      onOk: async () => {
+        try {
+          await cancelFamilyDoctor(familyId, doctorRequestId);
+          message.info("Đã hủy yêu cầu");
+          fetchRequests();
+        } catch (err) {
+          console.error(err);
+          message.error("Lỗi khi hủy yêu cầu");
+        }
+      },
+    });
   };
 
   useEffect(() => {
     fetchRequests();
   }, [filters]);
 
-  if (loading) return <p className="text-center py-5">Đang tải...</p>;
+  const flatData = requests.flatMap((family) =>
+    family.doctorRequests.map((req) => ({
+      key: `${family._id}-${req._id}`,
+      familyId: family._id,
+      doctorRequestId: req._id,
+      familyName: family.familyName,
+      owner: family.owner?.email,
+      doctor: req.doctorId?.name,
+      note: req.requestNote,
+      startDate: req.schedule?.startDate?.slice(0, 10),
+      frequency: req.schedule?.frequency,
+      status: req.status,
+      rejectionReason: req.rejectionReason,
+    }))
+  );
+
+  const statusTag = (status) => {
+    switch (status) {
+      case "pending":
+        return <Tag color="gold">Chờ duyệt</Tag>;
+      case "approved":
+        return <Tag color="green">Đã duyệt</Tag>;
+      case "rejected":
+        return <Tag color="red">Đã từ chối</Tag>;
+      case "cancelled":
+        return <Tag color="default">Đã hủy</Tag>;
+      default:
+        return "-";
+    }
+  };
+
+  const columns = [
+    {
+      title: "#",
+      render: (_, __, index) =>
+        (filters.page - 1) * filters.limit + index + 1,
+      width: 60,
+    },
+    {
+      title: "Tên gia đình",
+      dataIndex: "familyName",
+    },
+    {
+      title: "Chủ hộ",
+      dataIndex: "owner",
+      render: (v) => v || "—",
+    },
+    {
+      title: "Bác sĩ",
+      dataIndex: "doctor",
+      render: (v) => v || "—",
+    },
+    {
+      title: "Ghi chú",
+      dataIndex: "note",
+      render: (v) => v || "—",
+      width: 120,
+    },
+    {
+      title: "Ngày bắt đầu",
+      dataIndex: "startDate",
+    },
+    {
+      title: "Tần suất",
+      dataIndex: "frequency",
+    },
+    {
+      title: "Trạng thái",
+      dataIndex: "status",
+      render: (status) => statusTag(status),
+    },
+    {
+      title: "Thao tác",
+      render: (_, row) => {
+        if (row.status === "pending") {
+          return (
+            <Space>
+              <Button type="primary" size="small"
+                onClick={() => handleApprove(row.familyId, row.doctorRequestId)}
+              >
+                Duyệt
+              </Button>
+
+              <Button danger size="small"
+                onClick={() => handleReject(row.familyId, row.doctorRequestId)}
+              >
+                Từ chối
+              </Button>
+
+              <Button warning size="small"
+                onClick={() => handleCancel(row.familyId, row.doctorRequestId)}
+              >
+                Hủy
+              </Button>
+            </Space>
+          );
+        }
+
+        if (row.status === "rejected") {
+          return (
+            <Button size="small"
+              onClick={() => Modal.info({ title: "Lý do từ chối", content: row.rejectionReason })}
+            >
+              Lý do
+            </Button>
+          );
+        }
+
+        if (row.status === "approved") {
+          return <Button size="small" type="default">Xem chi tiết</Button>;
+        }
+
+        return null;
+      },
+    },
+  ];
 
   return (
-    <div className="container py-5">
-      <h2 className="mb-4 text-primary">📋 Danh sách yêu cầu bác sĩ gia đình</h2>
+    <div className="container py-4">
+      <Title level={3} style={{ marginBottom: 20 }}>Danh sách yêu cầu bác sĩ gia đình</Title>
 
-      <table className="table table-bordered align-middle">
-        <thead className="table-light">
-          <tr>
-            <th>#</th>
-            <th>Tên gia đình</th>
-            <th>Chủ hộ</th>
-            <th>Bác sĩ</th>
-            <th>Ghi chú</th>
-            <th>Ngày bắt đầu</th>
-            <th>Tần suất</th>
-            <th>Trạng thái</th>
-            <th>Thao tác</th>
-          </tr>
-        </thead>
-        <tbody>
-          {requests.length === 0 ? (
-            <tr>
-              <td colSpan="9" className="text-center">
-                Không có yêu cầu nào.
-              </td>
-            </tr>
-          ) : (
-            requests.map((family, i) =>
-              family.doctorRequests.map((req, j) => (
-                <tr key={`${family._id}-${req._id}`}>
-                  <td>{(filters.page - 1) * filters.limit + i + 1}.{j + 1}</td>
-                  <td>{family.familyName}</td>
-                  <td>{family.owner?.email || "—"}</td>
-                  <td>{req.doctorId?.name || "—"}</td>
-                  <td>{req.requestNote || "—"}</td>
-                  <td>{req.schedule?.startDate?.slice(0, 10) || "—"}</td>
-                  <td>{req.schedule?.frequency || "—"}</td>
-                  <td>
-                    {req.status === "pending" && <span className="text-warning">Chờ duyệt</span>}
-                    {req.status === "approved" && <span className="text-success">Đã duyệt</span>}
-                    {req.status === "rejected" && <span className="text-danger">Đã từ chối</span>}
-                    {req.status === "cancelled" && <span className="text-muted">Đã hủy</span>}
-                  </td>
-                  <td>
-                    {req.status === "pending" && (
-                      <>
-                        <button
-                          className="btn btn-sm btn-success me-1"
-                          onClick={() => handleApprove(family._id, req._id)}
-                        >
-                          Duyệt
-                        </button>
-                        <button
-                          className="btn btn-sm btn-danger me-1"
-                          onClick={() => handleReject(family._id, req._id)}
-                        >
-                          Từ chối
-                        </button>
-                        <button
-                          className="btn btn-sm btn-warning"
-                          onClick={() => handleCancel(family._id, req._id)}
-                        >
-                          Hủy
-                        </button>
-                      </>
-                    )}
-                    {req.status === "rejected" && (
-                      <button
-                        className="btn btn-sm btn-secondary"
-                        onClick={() => alert(req.rejectionReason || "Không có lý do")}
-                      >
-                        Lý do
-                      </button>
-                    )}
-                    {req.status === "approved" && (
-                      <button className="btn btn-sm btn-outline-primary">Xem chi tiết</button>
-                    )}
-                  </td>
-                </tr>
-              ))
-            )
-          )}
-        </tbody>
-      </table>
+      <Table
+        bordered
+        loading={loading}
+        columns={columns}
+        dataSource={flatData}
+        pagination={false}
+        rowClassName="align-middle"
+      />
 
       {pagination.totalPages > 1 && (
-        <div className="d-flex justify-content-center gap-2 mt-3">
-          {Array.from({ length: pagination.totalPages }).map((_, i) => (
-            <button
-              key={i}
-              className={`btn ${
-                pagination.page === i + 1 ? "btn-primary" : "btn-outline-primary"
-              } btn-sm`}
-              onClick={() => setFilters((prev) => ({ ...prev, page: i + 1 }))}
-            >
-              {i + 1}
-            </button>
-          ))}
+        <div className="d-flex justify-content-center mt-3">
+          <Pagination
+            current={pagination.page}
+            total={pagination.total}
+            pageSize={filters.limit}
+            onChange={(page) => setFilters({ ...filters, page })}
+          />
         </div>
       )}
     </div>

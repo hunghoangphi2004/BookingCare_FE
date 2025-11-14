@@ -1,4 +1,4 @@
-import { post,get, getWithTokenUser, getInclude  } from "../utils/request";
+import { post, get, getInclude } from "../utils/request";
 
 export const loginAdmin = async (payload) => {
   try {
@@ -62,7 +62,7 @@ export const getProfile = async () => {
   }
 };
 
-export const getProfileAdmin= async () => {
+export const getProfileAdmin = async () => {
   try {
     const result = await getInclude("/admin/auth/get-profile");
     return result;

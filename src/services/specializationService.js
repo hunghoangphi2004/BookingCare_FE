@@ -1,4 +1,4 @@
-import { get, postForm, patchForm, deleteData, getInclude } from "../utils/request"; // dùng hàm get đã có token
+import { postForm, patchForm, deleteData, getInclude } from "../utils/request"; // dùng hàm get đã có token
 
 
 export const getAllSpec = async (params = {}) => {

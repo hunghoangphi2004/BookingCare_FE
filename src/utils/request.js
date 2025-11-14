@@ -39,15 +39,11 @@ export const getInclude = async (path) => {
 
 
 export const post = async (path, options = {}) => {
-  const token = Cookies.get("tokenUser");
-
   const response = await fetch(API_DOMAIN + path, {
     method: "POST",
-    credentials: "include",
     headers: {
       Accept: "application/json",
-      "Content-Type": "application/json",
-      ...(token && { Authorization: `Bearer ${token}` }),
+      "Content-Type": "application/json"
     },
     body: JSON.stringify(options),
   });

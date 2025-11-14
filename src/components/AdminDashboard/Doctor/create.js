@@ -11,7 +11,8 @@ import {
     InputNumber,
     Upload,
     message,
-    notification
+    notification,
+    Switch
 } from "antd";
 
 import { UploadOutlined } from "@ant-design/icons";
@@ -142,6 +143,13 @@ const DoctorCreate = () => {
                             </Select.Option>
                         ))}
                     </Select>
+                </Form.Item>
+                <Form.Item
+                    label="Bác sĩ gia đình"
+                    name="isFamilyDoctor"
+                    valuePropName="checked" 
+                >
+                    <Switch checkedChildren="Có" unCheckedChildren="Không" />
                 </Form.Item>
 
                 <Form.Item label="Ảnh bác sĩ">

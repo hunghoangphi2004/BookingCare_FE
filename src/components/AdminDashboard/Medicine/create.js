@@ -1,39 +1,37 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createMedicine } from "../../../services/medicineService";
+import { Form, Input, Button, Alert } from "antd";
 
-function MedicineCreate() {
-    const [form, setForm] = useState({
-        name: "",
-        unit: "viên",
-        usage: "",
-        description: "",
-    });
-
+const MedicineCreate = () => {
+    const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
+    const [alert, setAlert] = useState({ type: "", message: "" });
+
     const navigate = useNavigate();
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setForm((prev) => ({ ...prev, [name]: value }));
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    const handleSubmit = async (values) => {
         setLoading(true);
-
         try {
-            const res = await createMedicine(form);
+            const res = await createMedicine(values);
 
             if (res.success) {
-                alert("Thêm thuốc thành công!");
-                navigate("/admin/medicines");
+                navigate("/admin/medicines", {
+                    state: {
+                        alert: {
+                            type: "success",
+                            message: "Thêm thuốc thành công!"
+                        }
+                    }
+                });
             } else {
-                alert(res.message || "Lỗi khi thêm thuốc");
+                setAlert({ type: "error", message: res.message || "Không thể thêm thuốc!" });
+                setTimeout(() => setAlert({ type: "", message: "" }), 5000);
             }
         } catch (err) {
             console.error(err);
-            alert("Có lỗi khi thêm thuốc");
+            setAlert({ type: "error", message: "Đã xảy ra lỗi hệ thống!" });
+            setTimeout(() => setAlert({ type: "", message: "" }), 5000);
         } finally {
             setLoading(false);
         }
@@ -41,57 +39,66 @@ function MedicineCreate() {
 
     return (
         <div className="container mt-4">
-            <h3>Thêm thuốc</h3>
-            <form onSubmit={handleSubmit}>
-                <div className="mb-3">
-                    <label>Tên thuốc</label>
-                    <input
-                        type="text"
-                        name="name"
-                        className="form-control"
-                        value={form.name}
-                        onChange={handleChange}
-                        required
-                    />
-                </div>
+            <h3 className="mb-4">Thêm thuốc</h3>
 
-                <div className="mb-3">
-                    <label>Đơn vị</label>
-                    <input
-                        type="text"
-                        name="unit"
-                        className="form-control"
-                        value={form.unit}
-                        onChange={handleChange}
-                    />
-                </div>
+            {alert.message && (
+                <Alert
+                    message={alert.message}
+                    type={alert.type}
+                    showIcon
+                    closable
+                    style={{ marginBottom: 16 }}
+                    onClose={() => setAlert({ type: "", message: "" })}
+                />
+            )}
 
-                <div className="mb-3">
-                    <label>Cách dùng</label>
-                    <textarea
-                        name="usage"
-                        className="form-control"
-                        value={form.usage}
-                        onChange={handleChange}
-                    />
-                </div>
+            <Form
+                form={form}
+                layout="vertical"
+                onFinish={handleSubmit}
+                style={{ maxWidth: 600 }}
+                initialValues={{ unit: "viên" }}
+            >
+                <Form.Item
+                    label="Tên thuốc"
+                    name="name"
+                    rules={[{ required: true, message: "Vui lòng nhập tên thuốc!" }]}
+                >
+                    <Input placeholder="VD: Paracetamol" />
+                </Form.Item>
 
-                <div className="mb-3">
-                    <label>Mô tả</label>
-                    <textarea
-                        name="description"
-                        className="form-control"
-                        value={form.description}
-                        onChange={handleChange}
-                    />
-                </div>
+                <Form.Item
+                    label="Đơn vị"
+                    name="unit"
+                    rules={[{ required: true, message: "Vui lòng nhập đơn vị!" }]}
+                >
+                    <Input placeholder="VD: viên, lọ, gói..." />
+                </Form.Item>
 
-                <button type="submit" className="btn btn-primary" disabled={loading}>
-                    {loading ? "Đang thêm..." : "Thêm thuốc"}
-                </button>
-            </form>
+                <Form.Item
+                    label="Cách dùng"
+                    name="usage"
+                >
+                    <Input.TextArea placeholder="Cách sử dụng thuốc..." rows={3} />
+                </Form.Item>
+
+                <Form.Item
+                    label="Mô tả"
+                    name="description"
+                >
+                    <Input.TextArea placeholder="Mô tả chi tiết..." rows={3} />
+                </Form.Item>
+
+                <Form.Item>
+                    <Button type="primary" htmlType="submit" loading={loading} style={{ marginRight: 8 }}>
+                        {loading ? "Đang thêm..." : "Thêm thuốc"}
+                    </Button>
+
+                    <Button onClick={() => navigate("/admin/medicines")}>Hủy</Button>
+                </Form.Item>
+            </Form>
         </div>
     );
-}
+};
 
 export default MedicineCreate;

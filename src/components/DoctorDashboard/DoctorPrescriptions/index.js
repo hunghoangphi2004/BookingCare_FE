@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import {getAllPrescriptionByDoctor, createPrescription, updatePrescription, deletePrescription, sendPrescriptionPDF } from "../../../services/prescriptionService";
+import { getAllPrescriptionByDoctor, deletePrescription, sendPrescriptionPDF } from "../../../services/prescriptionService";
 import { Modal, Button, Form } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 

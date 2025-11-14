@@ -1,4 +1,4 @@
-import { deleteData, get,getInclude,post,postForm, patchForm } from "../utils/request"; // dùng hàm get đã có token
+import { deleteData, get, getInclude, postForm, patchForm } from "../utils/request"; // dùng hàm get đã có token
 
 export const getDoctorById = async (id) => {
   return await get(`/home/get-doctor-by-id/${id}`);

@@ -54,7 +54,6 @@ export const routes = [
       </AdminRoute>
     ),
     children: [
-    { index: true, element: <Dashboard/> }, 
     ...adminRoutes,
     ...doctorRoutes,
     ...supporterRoutes,

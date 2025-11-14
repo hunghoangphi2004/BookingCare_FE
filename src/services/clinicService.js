@@ -1,4 +1,4 @@
-import { get, postForm, patchForm,putForm, deleteData, getInclude } from "../utils/request"; 
+import { postForm, patchForm, deleteData, getInclude } from "../utils/request";
 
 
 export const getAllClinic = async (params = {}) => {

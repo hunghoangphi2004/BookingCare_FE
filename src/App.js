@@ -2,8 +2,6 @@ import './App.css';
 import AllRoute from './components/AllRoute';
 import { ContextProvider } from './context/ContextProvider';
 import { useEffect } from 'react';
-import { useDispatch } from 'react-redux';
-import Cookies from 'js-cookie';
 import { setupFetchInterceptor } from './Inteceptor/setupFetchInterceptor';
 
 function App() {

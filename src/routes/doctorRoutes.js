@@ -8,12 +8,12 @@ import DoctorPrescriptions from "../components/DoctorDashboard/DoctorPrescriptio
 import PrescriptionCreate from "../components/AdminDashboard/Prescription/create";
 
 export const doctorRoutes = [
-  { path: "family", element: <ApprovedFamilyDashboard /> },
-  { path: "get-family-by-id/:id", element: <FamilyDetailInDoctor /> },
-  { path: "request-family-doctor", element: <RequestFamilyDoctorDashboard /> },
-  { path: "schedules", element: <ScheduleDoctor /> },
-  { path: "appointments", element: <DoctorCalendar /> },
-  { path: "my-prescriptions", element: <DoctorPrescriptions /> },
-  { path: "prescriptions/create", element: <PrescriptionCreate /> },
+  { path: "doctor/family", element: <ApprovedFamilyDashboard /> },
+  { path: "doctor/get-family-by-id/:id", element: <FamilyDetailInDoctor /> },
+  { path: "doctor/request-family-doctor", element: <RequestFamilyDoctorDashboard /> },
+  { path: "doctor/schedules", element: <ScheduleDoctor /> },
+  { path: "doctor/appointments", element: <DoctorCalendar /> },
+  { path: "doctor/my-prescriptions", element: <DoctorPrescriptions /> },
+  { path: "doctor/prescriptions/create", element: <PrescriptionCreate /> },
   { path: "*", element: <h2>404 - Trang không tồn tại</h2> },
 ];

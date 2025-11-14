@@ -1,145 +1,114 @@
 import { useEffect, useState } from "react";
-import { getAllFamily } from "../../../services/familyService";
-import { useNavigate } from "react-router-dom";
+import { getAllFamily} from "../../../services/familyService";
+import { useNavigate, useLocation } from "react-router-dom";
+import { Table, Button, Typography, Alert, Space } from "antd";
 
+const { Title } = Typography;
 
 function Families() {
-    const [families, setFamilies] = useState([]);
-    const [pagination, setPagination] = useState({});
-    const [filters, setFilters] = useState({ page: 1, limit: 5 });
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
-    const navigate = useNavigate();
+  const [families, setFamilies] = useState([]);
+  const [pagination, setPagination] = useState({});
+  const [filters, setFilters] = useState({ page: 1, limit: 5 });
+  const [loading, setLoading] = useState(true);
+  const [alert, setAlert] = useState({ type: "", message: "" });
 
+  const navigate = useNavigate();
+  const location = useLocation();
 
-    useEffect(() => {
-        fetchFamiles(filters);
-    }, [filters]);
+  // Hiển thị alert từ navigation state
+  useEffect(() => {
+    if (location.state?.alert) {
+      setAlert(location.state.alert);
+      navigate(location.pathname, { replace: true });
+      setTimeout(() => setAlert({ type: "", message: "" }), 5000);
+    }
+  }, [location, navigate]);
 
-    const fetchFamiles = async (params = {}) => {
-        try {
-            console.log(params)
-            setLoading(true);
-            const res = await getAllFamily(params);
-            console.log(res)
-            if (res.success) {
-                setFamilies(res.data);
-                setPagination(res.pagination);
-            } else {
-                setError(res.message || "Không lấy được dữ liệu");
-            }
-        } catch (err) {
-            console.error(err);
-            setError("Có lỗi xảy ra khi lấy dữ liệu");
-        } finally {
-            setLoading(false);
-        }
-    };
+  const fetchFamilies = async (params = filters) => {
+    try {
+      setLoading(true);
+      const res = await getAllFamily(params);
+      if (res.success) {
+        setFamilies(res.data);
+        setPagination(res.pagination);
+      } else {
+        setAlert({ type: "error", message: res.message || "Không lấy được dữ liệu" });
+      }
+    } catch (err) {
+      console.error(err);
+      setAlert({ type: "error", message: "Có lỗi xảy ra khi lấy dữ liệu" });
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    console.log(families)
+  useEffect(() => {
+    fetchFamilies(filters);
+  }, [filters]);
 
-    //   const handleFilterChange = (e) => {
-    //     const specializationId = e.target.value;
-    //     setFilters((prev) => ({
-    //       ...prev,
-    //       specializationId,
-    //       page: 1 
-    //     }));
-    //   };
+  const columns = [
+    {
+      title: "#",
+      render: (_, __, idx) => (filters.page - 1) * filters.limit + idx + 1
+    },
+    {
+      title: "Tên gia đình",
+      dataIndex: "familyName"
+    },
+    {
+      title: "Chủ hộ",
+      render: r => r.owner?.email
+    },
+    {
+      title: "Số thành viên",
+      render: r => r.members?.length || 0
+    },
+    {
+      title: "Hành động",
+      render: r => (
+        <Space>
+          <Button type="primary" size="small" onClick={() => navigate(`/admin/families/detail/${r._id}`)}>
+            Xem
+          </Button>
+        </Space>
+      )
+    }
+  ];
 
-    const handleDelete = async (id) => {
-        // if (window.confirm("Bạn có chắc muốn xóa phòng khám này không?")) {
-        //     const res = await deleteClinic(id);
-        //     if (res.success) {
-        //         alert("Xóa thành công!");
-        //         setClinics((prev) => prev.filter((d) => d._id !== id));
-        //         setPagination((prev) => {
-        //             const newTotal = (prev.total || 0) - 1;
-        //             const totalPages = Math.ceil(newTotal / (filters.limit || 10));
+  return (
+    <div>
+      {alert.message && (
+        <Alert
+          message={alert.message}
+          type={alert.type}
+          showIcon
+          closable
+          onClose={() => setAlert({ type: "", message: "" })}
+          style={{ marginBottom: 16 }}
+        />
+      )}
 
-        //             if (filters.page > totalPages && totalPages > 0) {
-        //                 setFilters((f) => ({ ...f, page: totalPages }));
-        //             }
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+        <Title level={3} style={{ margin: 0 }}>
+          Danh sách gia đình: {pagination.total || 0}
+        </Title>
+      </div>
 
-        //             return {
-        //                 ...prev,
-        //                 total: newTotal,
-        //                 totalPages,
-        //             };
-        //         });
-        //     } else {
-        //         alert("Lỗi khi xóa!");
-        //     }
-        // }
-    };
-
-    const handlePageChange = (newPage) => {
-        setFilters((prev) => ({
-            ...prev,
-            page: newPage
-        }));
-    };
-
-    if (loading) return <p>Đang tải dữ liệu...</p>;
-    if (error) return <div className="alert alert-danger">{error}</div>;
-
-    return (
-        <>
-            <div>
-                <h2 className="mb-5">Danh sách gia đình ({pagination.total || 0})</h2>
-                {/* <button
-                    className="btn btn-primary"
-                    onClick={() => navigate("/admin/families/create")}
-                >
-                    + Thêm mới
-                </button> */}
-
-
-                <table className="table table-striped table-bordered mt-3">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Tên gia đình</th>
-                            <th>Chủ hộ</th>
-                            <th>Số thành viên</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {families.map((a, idx) => (
-                            <tr key={a._id}>
-                                <td>{(filters.page - 1) * (filters.limit || 10) + idx + 1}</td>
-                                <td>{a.familyName}</td>
-                                <td>{a.owner.email}</td>
-                                <td>{a.members.length}</td>
-                                <td>
-                                    <button className="btn btn-info btn-sm" onClick={() => navigate(`/admin/families/detail/${a._id}`)}>Xem</button>
-                                    {/* <button className="btn btn-success btn-sm" onClick={() => navigate(`/admin/clinics/edit/${a._id}`)}>Sửa</button>
-                                    <button className="btn btn-danger btn-sm" onClick={() => handleDelete(a._id)}>Xoá</button> */}
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-
-                {pagination.totalPages > 1 && (
-                    <div className="d-flex justify-content-center gap-2 mt-3">
-                        {Array.from({ length: pagination.totalPages }).map((_, i) => (
-                            <button
-                                key={i}
-                                onClick={() => handlePageChange(i + 1)}
-                                className={`btn ${pagination.page === i + 1
-                                    ? "btn-primary"
-                                    : "btn-outline-primary"
-                                    } btn-sm`}
-                            >
-                                {i + 1}
-                            </button>
-                        ))}
-                    </div>
-                )}
-            </div>
-        </>
-    );
+      <Table
+        columns={columns}
+        dataSource={families}
+        rowKey={r => r._id}
+        loading={loading}
+        pagination={{
+          current: filters.page,
+          pageSize: filters.limit,
+          total: pagination.total,
+          onChange: page => setFilters(prev => ({ ...prev, page }))
+        }}
+        scroll={{ x: 800 }}
+      />
+    </div>
+  );
 }
 
 export default Families;

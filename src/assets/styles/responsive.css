@@ -29,6 +29,10 @@
   .layout-dashboard .header-control .sidebar-toggler {
     display: none;
   }
+
+  .layout-dashboard .sidebar-toggler{
+    display: none;
+  }
 }
 
 @media (min-width: 768px) {

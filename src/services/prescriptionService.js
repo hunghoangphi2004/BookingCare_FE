@@ -1,4 +1,4 @@
-import { get, post,patch,deleteData, getInclude } from "../utils/request"; 
+import { post, patch, deleteData, getInclude } from "../utils/request";
 
 
 export const getAllPrescription = async (params = {}) => {
@@ -31,5 +31,6 @@ export const deletePrescription = async (id) => {
 };
 
 export const sendPrescriptionPDF = async (id, data) => {
+  console.log("gửi")
   return await post(`/admin/prescriptions/send-pdf/${id}`, data)
 }

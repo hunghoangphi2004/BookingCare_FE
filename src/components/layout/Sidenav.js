@@ -1,6 +1,6 @@
 // Sidenav.js
 import { useState, useEffect } from "react";
-import { Menu, Button } from "antd";
+import { Menu } from "antd";
 import { NavLink, useLocation } from "react-router-dom";
 import Cookies from "js-cookie";
 import logo from "../../assets/images/logo.png";

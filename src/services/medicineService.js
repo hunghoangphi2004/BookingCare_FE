@@ -1,4 +1,4 @@
-import { get, post,patch,deleteData, getInclude } from "../utils/request"; 
+import { post,patch,deleteData, getInclude } from "../utils/request"; 
 
 
 export const getAllMedicine = async (params = {}) => {

@@ -5,31 +5,32 @@ import { getAllDoctor } from "../../../services/doctorService";
 import { getAllPatient } from "../../../services/patientService";
 import { getAllMedicine } from "../../../services/medicineService";
 import Cookies from "js-cookie";
+import { Form, Input, Select, Button, Alert, Divider, Space, Row, Col } from "antd";
+import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
 
+const { Option } = Select;
 
-function PrescriptionCreate() {
-  const profile = Cookies.get("profile") ? JSON.parse(Cookies.get("profile")) : null;
-  console.log(profile)
-
+const PrescriptionCreate = () => {
+  const profile = Cookies.get("profile")
+    ? JSON.parse(Cookies.get("profile"))
+    : null;
   const isDoctor = profile?.role === "doctor";
-  const [form, setForm] = useState({
-    doctorId: isDoctor ? profile.doctor._id : "",
-    patientId: "",
-    diagnosis: "",
-    notes: "",
-  });
-  const [medicines, setMedicines] = useState([]);
-  const [medicineList, setMedicineList] = useState([{ medicineId: "", dosage: "", duration: "", instructions: "" }]);
+
+  const [form] = Form.useForm();
+  const navigate = useNavigate();
+
+  const [loading, setLoading] = useState(false);
+  const [alert, setAlert] = useState({ type: "", message: "" });
 
   const [doctors, setDoctors] = useState([]);
   const [patients, setPatients] = useState([]);
   const [allMedicines, setAllMedicines] = useState([]);
 
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
-
   useEffect(() => {
     fetchInitialData();
+    if (isDoctor) {
+      form.setFieldsValue({ doctorId: profile.doctor._id });
+    }
   }, []);
 
   const fetchInitialData = async () => {
@@ -43,53 +44,37 @@ function PrescriptionCreate() {
       if (patRes.success) setPatients(patRes.data);
       if (medRes.success) setAllMedicines(medRes.data);
     } catch (err) {
-      console.error("❌ Lỗi khi tải dữ liệu:", err);
+      console.error(err);
     }
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleMedicineChange = (index, field, value) => {
-    const updated = [...medicineList];
-    updated[index][field] = value;
-    setMedicineList(updated);
-  };
-
-  const addMedicineField = () => {
-    setMedicineList([...medicineList, { medicineId: "", dosage: "", duration: "", instructions: "" }]);
-  };
-
-  const removeMedicineField = (index) => {
-    setMedicineList(medicineList.filter((_, i) => i !== index));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!form.doctorId || !form.patientId || !form.diagnosis) {
-      alert("Vui lòng nhập đủ thông tin bắt buộc");
+  const handleSubmit = async (values) => {
+    if (!values.patientId || !values.diagnosis || (!values.doctorId && !isDoctor)) {
+      setAlert({ type: "error", message: "Vui lòng nhập đủ thông tin bắt buộc!" });
+      setTimeout(() => setAlert({ type: "", message: "" }), 5000);
       return;
     }
 
     const body = {
-      ...form,
-      medicines: medicineList.filter((m) => m.medicineId), // chỉ lấy thuốc đã chọn
+      ...values,
+      medicines: values.medicines?.filter((m) => m.medicineId) || [],
     };
 
     setLoading(true);
     try {
       const res = await createPrescription(body);
       if (res.success) {
-        alert("Tạo toa thuốc thành công!");
-        navigate("/admin/prescriptions");
+        navigate("/admin/prescriptions", {
+          state: { alert: { type: "success", message: "Tạo toa thuốc thành công!" } },
+        });
       } else {
-        alert(res.message || "Lỗi khi tạo toa thuốc");
+        setAlert({ type: "error", message: res.message || "Không thể tạo toa thuốc!" });
+        setTimeout(() => setAlert({ type: "", message: "" }), 5000);
       }
     } catch (err) {
       console.error(err);
-      alert("Có lỗi xảy ra khi tạo toa thuốc");
+      setAlert({ type: "error", message: "Đã xảy ra lỗi hệ thống!" });
+      setTimeout(() => setAlert({ type: "", message: "" }), 5000);
     } finally {
       setLoading(false);
     }
@@ -97,160 +82,129 @@ function PrescriptionCreate() {
 
   return (
     <div className="container mt-4">
-      <h3>Tạo toa thuốc</h3>
-      <form onSubmit={handleSubmit}>
-        {/* --- BÁC SĨ --- */}
+      <h3 className="mb-4">Tạo toa thuốc</h3>
+
+      {alert.message && (
+        <Alert
+          message={alert.message}
+          type={alert.type}
+          showIcon
+          closable
+          style={{ marginBottom: 16 }}
+          onClose={() => setAlert({ type: "", message: "" })}
+        />
+      )}
+
+      <Form form={form} layout="vertical" onFinish={handleSubmit} style={{ maxWidth: 800 }}>
         {!isDoctor && (
-          <div className="mb-3">
-            <label>Bác sĩ</label>
-            <select
-              name="doctorId"
-              className="form-select"
-              value={form.doctorId}
-              onChange={handleChange}
-              required={!isDoctor} 
-            >
-              <option value="">-- Chọn bác sĩ --</option>
+          <Form.Item
+            label="Bác sĩ"
+            name="doctorId"
+            rules={[{ required: true, message: "Vui lòng chọn bác sĩ!" }]}
+          >
+            <Select placeholder="-- Chọn bác sĩ --">
               {doctors.map((d) => (
-                <option key={d._id} value={d._id}>
+                <Option key={d._id} value={d._id}>
                   {d.userId?.fullName || d.name}
-                </option>
+                </Option>
               ))}
-            </select>
-          </div>
+            </Select>
+          </Form.Item>
         )}
 
-
-
-
-        {/* --- BỆNH NHÂN --- */}
-        <div className="mb-3">
-          <label>Bệnh nhân</label>
-          <select
-            name="patientId"
-            className="form-select"
-            value={form.patientId}
-            onChange={handleChange}
-            required
-          >
-            <option value="">-- Chọn bệnh nhân --</option>
+        <Form.Item
+          label="Bệnh nhân"
+          name="patientId"
+          rules={[{ required: true, message: "Vui lòng chọn bệnh nhân!" }]}
+        >
+          <Select placeholder="-- Chọn bệnh nhân --">
             {patients.map((p) => (
-              <option key={p._id} value={p._id}>
+              <Option key={p._id} value={p._id}>
                 {p.firstName} {p.lastName} - {p.phoneNumber}
-              </option>
+              </Option>
             ))}
-          </select>
-        </div>
+          </Select>
+        </Form.Item>
 
-        {/* --- CHẨN ĐOÁN + GHI CHÚ --- */}
-        <div className="mb-3">
-          <label>Chẩn đoán</label>
-          <input
-            type="text"
-            name="diagnosis"
-            className="form-control"
-            value={form.diagnosis}
-            onChange={handleChange}
-            required
-          />
-        </div>
+        <Form.Item
+          label="Chẩn đoán"
+          name="diagnosis"
+          rules={[{ required: true, message: "Vui lòng nhập chẩn đoán!" }]}
+        >
+          <Input placeholder="Chẩn đoán bệnh" />
+        </Form.Item>
 
-        <div className="mb-3">
-          <label>Ghi chú</label>
-          <textarea
-            name="notes"
-            className="form-control"
-            value={form.notes}
-            onChange={handleChange}
-          />
-        </div>
+        <Form.Item label="Ghi chú" name="notes">
+          <Input.TextArea rows={3} placeholder="Ghi chú thêm" />
+        </Form.Item>
 
-        {/* --- DANH SÁCH THUỐC --- */}
-        <div className="mb-3">
-          <label>Thuốc</label>
-          {medicineList.map((m, idx) => (
-            <div key={idx} className="border rounded p-3 mb-2">
-              <div className="row g-2">
-                <div className="col-md-3">
-                  <select
-                    className="form-select"
-                    value={m.medicineId}
-                    onChange={(e) =>
-                      handleMedicineChange(idx, "medicineId", e.target.value)
-                    }
-                    required
-                  >
-                    <option value="">-- Chọn thuốc --</option>
-                    {allMedicines.map((med) => (
-                      <option key={med._id} value={med._id}>
-                        {med.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="col-md-2">
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Liều dùng"
-                    value={m.dosage}
-                    onChange={(e) =>
-                      handleMedicineChange(idx, "dosage", e.target.value)
-                    }
-                  />
-                </div>
-                <div className="col-md-2">
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Thời gian"
-                    value={m.duration}
-                    onChange={(e) =>
-                      handleMedicineChange(idx, "duration", e.target.value)
-                    }
-                  />
-                </div>
-                <div className="col-md-3">
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Hướng dẫn"
-                    value={m.instructions}
-                    onChange={(e) =>
-                      handleMedicineChange(idx, "instructions", e.target.value)
-                    }
-                  />
-                </div>
-                <div className="col-md-2 text-end">
-                  {idx > 0 && (
-                    <button
-                      type="button"
-                      className="btn btn-danger"
-                      onClick={() => removeMedicineField(idx)}
+        <Divider>Thuốc</Divider>
+
+        <Form.List name="medicines" initialValue={[{ medicineId: "", dosage: "", duration: "", instructions: "" }]}>
+          {(fields, { add, remove }) => (
+            <>
+              {fields.map(({ key, name, ...restField }, idx) => (
+                <Row key={key} gutter={8} align="middle" style={{ marginBottom: 8 }}>
+                  <Col>
+                    <Form.Item
+                      {...restField}
+                      name={[name, "medicineId"]}
+                      rules={[{ required: true, message: "Chọn thuốc!" }]}
                     >
-                      Xóa
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
+                      <Select placeholder="Chọn thuốc" style={{ width: 180 }}>
+                        {allMedicines.map((med) => (
+                          <Option key={med._id} value={med._id}>
+                            {med.name}
+                          </Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
+                  </Col>
+                  <Col flex={1}>
+                    <Form.Item {...restField} name={[name, "dosage"]}>
+                      <Input placeholder="Liều dùng" />
+                    </Form.Item>
+                  </Col>
+                  <Col flex={1}>
+                    <Form.Item {...restField} name={[name, "duration"]}>
+                      <Input placeholder="Thời gian" />
+                    </Form.Item>
+                  </Col>
+                  <Col flex={1}>
+                    <Form.Item {...restField} name={[name, "instructions"]}>
+                      <Input placeholder="Hướng dẫn" />
+                    </Form.Item>
+                  </Col>
+                  <Col>
+                    {idx > 0 && (
+                      <Button
+                        danger
+                        type="primary"
+                        icon={<DeleteOutlined />}
+                        onClick={() => remove(name)}
+                      />
+                    )}
+                  </Col>
+                </Row>
+              ))}
+              <Form.Item>
+                <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>
+                  Thêm thuốc
+                </Button>
+              </Form.Item>
+            </>
+          )}
+        </Form.List>
 
-          <button
-            type="button"
-            className="btn btn-outline-primary"
-            onClick={addMedicineField}
-          >
-            + Thêm thuốc
-          </button>
-        </div>
-
-        <button type="submit" className="btn btn-primary" disabled={loading}>
-          {loading ? "Đang tạo..." : "Tạo toa thuốc"}
-        </button>
-      </form>
+        <Form.Item>
+          <Button type="primary" htmlType="submit" loading={loading} style={{ marginRight: 8 }}>
+            {loading ? "Đang tạo..." : "Tạo toa thuốc"}
+          </Button>
+          <Button onClick={() => navigate("/admin/prescriptions")}>Hủy</Button>
+        </Form.Item>
+      </Form>
     </div>
   );
-}
+};
 
 export default PrescriptionCreate;

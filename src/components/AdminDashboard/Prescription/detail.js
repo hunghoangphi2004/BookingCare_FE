@@ -1,6 +1,21 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getPrescriptionById, deletePrescription } from "../../../services/prescriptionService";
+import {
+    getPrescriptionById,
+    deletePrescription
+} from "../../../services/prescriptionService";
+
+import {
+    Card,
+    Typography,
+    Table,
+    Tag,
+    Space,
+    Button,
+    Alert,
+    Modal,
+    Descriptions
+} from "antd";
 
 function PrescriptionDetail() {
     const { id } = useParams();
@@ -8,124 +23,171 @@ function PrescriptionDetail() {
 
     const [prescription, setPrescription] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
+    const [alert, setAlert] = useState({ type: "", message: "" });
+
+    const [isDeleteModal, setIsDeleteModal] = useState(false);
+
+    const { Title } = Typography;
 
     useEffect(() => {
-        const fetch = async () => {
+        const fetchData = async () => {
             try {
                 setLoading(true);
                 const res = await getPrescriptionById(id);
-                console.log(res)
                 if (res.success) {
                     setPrescription(res.data);
                 } else {
-                    setError(res.message || "Không tải được toa thuốc");
+                    setAlert({ type: "error", message: res.message });
                 }
-            } catch (err) {
-                console.error(err);
-                setError("Lỗi khi tải toa thuốc");
+            } catch (e) {
+                setAlert({ type: "error", message: "Lỗi khi tải dữ liệu" });
             } finally {
                 setLoading(false);
             }
         };
-        fetch();
+        fetchData();
     }, [id]);
 
     const handleDelete = async () => {
-        if (!window.confirm("Bạn có chắc muốn xóa toa thuốc này không?")) return;
         try {
             const res = await deletePrescription(id);
             if (res.success) {
-                alert("Xóa thành công");
-                navigate("/admin/prescriptions");
+                setAlert({ type: "success", message: "Xóa thành công!" });
+                setTimeout(() => navigate("/admin/prescriptions"), 1200);
             } else {
-                alert(res.message || "Lỗi khi xóa");
+                setAlert({ type: "error", message: res.message });
             }
         } catch (err) {
-            console.error(err);
-            alert("Lỗi khi xóa");
+            setAlert({ type: "error", message: "Lỗi khi xóa" });
+        } finally {
+            setIsDeleteModal(false);
         }
     };
 
     if (loading) return <p>Đang tải...</p>;
-    if (error) return <div className="alert alert-danger">{error}</div>;
-    if (!prescription) return <p>Không tìm thấy toa thuốc</p>;
+    if (alert.message && !prescription)
+        return <Alert message={alert.message} type="error" showIcon />;
 
-    // ✅ Lấy tên bác sĩ và bệnh nhân sau khi populate
-    const doctorName = prescription.doctorId?.name || "Chưa rõ";
-    const patientName = prescription.patientId
-        ? `${prescription.patientId.firstName || ""} ${prescription.patientId.lastName || ""}`.trim()
-        : "Chưa rõ";
+    if (!prescription) return <p>Không tìm thấy toa thuốc.</p>;
+
+    const doctorName = prescription.doctorId?.name || "Không rõ";
+    const patientName =
+        prescription.patientId
+            ? `${prescription.patientId.firstName} ${prescription.patientId.lastName}`
+            : "Không rõ";
+
+    const medicineColumns = [
+        { title: "#", render: (_, __, idx) => idx + 1, width: 50 },
+        {
+            title: "Tên thuốc",
+            render: (r) => r.name || r.medicineId?.name || "N/A"
+        },
+        { title: "Liều", dataIndex: "dosage", width: 120 },
+        { title: "Thời gian", dataIndex: "duration", width: 120 },
+        { title: "Hướng dẫn", dataIndex: "instructions" }
+    ];
 
     return (
-        <div className="container mt-4">
-            <div className="d-flex justify-content-between align-items-center mb-3">
-                <h3>Chi tiết toa thuốc</h3>
-                <div>
-                    <button className="btn btn-secondary me-2" onClick={() => navigate("/admin/prescriptions")}>
-                        Quay lại
-                    </button>
-                    <button className="btn btn-warning me-2" onClick={() => navigate(`/admin/prescriptions/${id}/edit`)}>
-                        Sửa
-                    </button>
-                    <button className="btn btn-danger" onClick={handleDelete}>
-                        Xóa
-                    </button>
-                </div>
-            </div>
-
-            <div className="mb-3">
-                <strong>Bác sĩ:</strong> {doctorName}
-            </div>
-            <div className="mb-3">
-                <strong>Bệnh nhân:</strong> {patientName}
-            </div>
-            <div className="mb-3">
-                <strong>Chẩn đoán:</strong> {prescription.diagnosis || "-"}
-            </div>
-            <div className="mb-3">
-                <strong>Trạng thái:</strong>{" "}
-                <span
-                    className={`badge ${
-                        prescription.status === "final" ? "bg-success" : "bg-secondary"
-                    }`}
-                >
-                    {prescription.status}
-                </span>
-            </div>
-            <div className="mb-4">
-                <strong>Ghi chú:</strong>
-                <div className="border rounded p-2 mt-1">{prescription.notes || "-"}</div>
-            </div>
-
-            <h5>Danh sách thuốc</h5>
-            {Array.isArray(prescription.medicines) && prescription.medicines.length > 0 ? (
-                <table className="table table-sm table-bordered mt-2">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Tên thuốc</th>
-                            <th>Liều</th>
-                            <th>Thời gian</th>
-                            <th>Hướng dẫn</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {prescription.medicines.map((m, i) => (
-                            <tr key={m._id || i}>
-                                <td>{i + 1}</td>
-                                <td>{m.name || m.medicineId?.name || "N/A"}</td>
-                                <td>{m.dosage || "-"}</td>
-                                <td>{m.duration || "-"}</td>
-                                <td>{m.instructions || "-"}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            ) : (
-                <p>Chưa có thuốc trong toa này.</p>
+        <>
+            {alert.message && (
+                <Alert
+                    message={alert.message}
+                    type={alert.type}
+                    showIcon
+                    closable
+                    style={{ marginBottom: 16 }}
+                    onClose={() => setAlert({ type: "", message: "" })}
+                />
             )}
-        </div>
+
+            {/* HEADER */}
+            <Space
+                style={{
+                    marginBottom: 16,
+                    width: "100%",
+                    justifyContent: "space-between",
+                    alignItems: "center"
+                }}
+            >
+                <Title level={3} style={{ margin: 0 }}>
+                    Chi tiết toa thuốc
+                </Title>
+
+                <Space>
+                    <Button onClick={() => navigate("/admin/prescriptions")}>
+                        Quay lại
+                    </Button>
+                    <Button
+                        type="primary"
+                        onClick={() =>
+                            navigate(`/admin/prescriptions/${id}/edit`)
+                        }
+                    >
+                        Sửa
+                    </Button>
+                    <Button danger onClick={() => setIsDeleteModal(true)}>
+                        Xóa
+                    </Button>
+                </Space>
+            </Space>
+
+            {/* MAIN INFO */}
+            <Card title="Thông tin chung" bordered style={{ marginBottom: 24 }}>
+                <Descriptions column={1}>
+                    <Descriptions.Item label="Bác sĩ">
+                        {doctorName}
+                    </Descriptions.Item>
+
+                    <Descriptions.Item label="Bệnh nhân">
+                        {patientName}
+                    </Descriptions.Item>
+
+                    <Descriptions.Item label="Chẩn đoán">
+                        {prescription.diagnosis || "-"}
+                    </Descriptions.Item>
+
+                    <Descriptions.Item label="Trạng thái">
+                        {prescription.status === "final" ? (
+                            <Tag color="green">final</Tag>
+                        ) : (
+                            <Tag>draft</Tag>
+                        )}
+                    </Descriptions.Item>
+
+                    <Descriptions.Item label="Ghi chú">
+                        {prescription.notes || "-"}
+                    </Descriptions.Item>
+                </Descriptions>
+            </Card>
+
+            {/* MEDICINES */}
+            <Card title="Danh sách thuốc">
+                {prescription.medicines?.length > 0 ? (
+                    <Table
+                        dataSource={prescription.medicines}
+                        columns={medicineColumns}
+                        rowKey={(r) => r._id || Math.random()}
+                        pagination={false}
+                        bordered
+                    />
+                ) : (
+                    <p>Không có thuốc trong toa này.</p>
+                )}
+            </Card>
+
+            {/* DELETE MODAL */}
+            <Modal
+                title="Xác nhận xóa"
+                open={isDeleteModal}
+                okText="Xóa"
+                okType="danger"
+                cancelText="Hủy"
+                onOk={handleDelete}
+                onCancel={() => setIsDeleteModal(false)}
+            >
+                Bạn có chắc muốn xóa toa thuốc này không?
+            </Modal>
+        </>
     );
 }
 

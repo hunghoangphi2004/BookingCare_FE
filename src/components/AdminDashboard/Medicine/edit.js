@@ -1,120 +1,122 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { getMedicineById, updateMedicine } from "../../../services/medicineService";
+import { Form, Input, Button, Alert, Typography } from "antd";
+
+const { Title } = Typography;
 
 function MedicineEdit() {
-  const { id } = useParams();
-  const navigate = useNavigate();
+    const { id } = useParams();
+    const navigate = useNavigate();
 
-  const [form, setForm] = useState({
-    name: "",
-    unit: "",
-    usage: "",
-    description: "",
-  });
-  const [loading, setLoading] = useState(false);
-  const [oldMedicine, setOldMedicine] = useState(null);
-  useEffect(() => {
-    const fetchMedicine = async () => {
-      try {
-        const res = await getMedicineById(id);
-        console.log(res)
-        if (res.success && res.data) {
-          setOldMedicine(res.data);
-          setForm({
-            name: res.data.name || "",
-            unit: res.data.unit || "",
-            usage: res.data.usage || "",
-            description: res.data.description || "",
-          });
+    const [form] = Form.useForm();
+    const [loading, setLoading] = useState(false);
+    const [oldMedicine, setOldMedicine] = useState(null);
+    const [alert, setAlert] = useState({ type: "", message: "" });
+
+    useEffect(() => {
+        const fetchMedicine = async () => {
+            try {
+                const res = await getMedicineById(id);
+                if (res.success && res.data) {
+                    setOldMedicine(res.data);
+                    form.setFieldsValue({
+                        name: res.data.name,
+                        unit: res.data.unit,
+                        usage: res.data.usage,
+                        description: res.data.description,
+                    });
+                }
+            } catch (error) {
+                console.error("Lỗi khi tải dữ liệu thuốc:", error);
+                setAlert({ type: "error", message: "Lỗi khi tải dữ liệu!" });
+            }
+        };
+        fetchMedicine();
+    }, [id, form]);
+
+    const handleSubmit = async (values) => {
+        setLoading(true);
+        try {
+            const res = await updateMedicine(id, values);
+
+            if (res.success) {
+                navigate("/admin/medicines", {
+                    state: {
+                        alert: {
+                            type: "success",
+                            message: "Cập nhật thuốc thành công!"
+                        }
+                    }
+                });
+            } else {
+                setAlert({
+                    type: "error",
+                    message: res.message || "Không thể cập nhật thuốc!"
+                });
+
+                setTimeout(() => setAlert({ type: "", message: "" }), 4000);
+            }
+        } catch (error) {
+            console.error("Lỗi update:", error);
+            setAlert({
+                type: "error",
+                message: "Có lỗi xảy ra khi cập nhật thuốc!"
+            });
+
+            setTimeout(() => setAlert({ type: "", message: "" }), 4000);
+        } finally {
+            setLoading(false);
         }
-      } catch (error) {
-        console.error("Lỗi khi tải dữ liệu thuốc:", error);
-      }
     };
-    fetchMedicine();
-  }, [id]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-  };
+    if (!oldMedicine) return <p className="text-center mt-5">Đang tải dữ liệu...</p>;
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const res = await updateMedicine(id, form);
-      if (res.success) {
-        alert("Cập nhật thuốc thành công!");
-        navigate("/admin/medicines");
-      } else {
-        alert(res.message || "Lỗi khi cập nhật thuốc");
-      }
-    } catch (error) {
-      console.error("Lỗi khi cập nhật:", error);
-      alert("Có lỗi xảy ra khi cập nhật thuốc");
-    } finally {
-      setLoading(false);
-    }
-  };
+    return (
+        <div className="container mt-4" style={{ maxWidth: 700 }}>
+            <Title level={3}>Cập nhật thuốc</Title>
 
-  if (!oldMedicine) return <p className="text-center mt-5">Đang tải dữ liệu...</p>;
+            {alert.message && (
+                <Alert
+                    message={alert.message}
+                    type={alert.type}
+                    showIcon
+                    closable
+                    style={{ marginBottom: 16 }}
+                    onClose={() => setAlert({ type: "", message: "" })}
+                />
+            )}
 
-  return (
-    <div className="container mt-4">
-      <h3>Cập nhật thuốc</h3>
-      <form onSubmit={handleSubmit}>
-        <div className="mb-3">
-          <label>Tên thuốc</label>
-          <input
-            type="text"
-            name="name"
-            className="form-control"
-            value={form.name}
-            onChange={handleChange}
-            required
-          />
+            <Form form={form} layout="vertical" onFinish={handleSubmit}>
+                <Form.Item
+                    label="Tên thuốc"
+                    name="name"
+                    rules={[{ required: true, message: "Vui lòng nhập tên thuốc!" }]}
+                >
+                    <Input />
+                </Form.Item>
+
+                <Form.Item label="Đơn vị" name="unit">
+                    <Input />
+                </Form.Item>
+
+                <Form.Item label="Cách dùng" name="usage">
+                    <Input />
+                </Form.Item>
+
+                <Form.Item label="Mô tả" name="description">
+                    <Input.TextArea rows={3} />
+                </Form.Item>
+
+                <Form.Item>
+                    <Button type="primary" htmlType="submit" loading={loading} style={{ marginRight: 10 }}>
+                        {loading ? "Đang cập nhật..." : "Cập nhật thuốc"}
+                    </Button>
+                    <Button onClick={() => navigate("/admin/medicines")}>Hủy</Button>
+                </Form.Item>
+            </Form>
         </div>
-
-        <div className="mb-3">
-          <label>Đơn vị</label>
-          <input
-            type="text"
-            name="unit"
-            className="form-control"
-            value={form.unit}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div className="mb-3">
-          <label>Cách dùng</label>
-          <input
-            type="text"
-            name="usage"
-            className="form-control"
-            value={form.usage}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div className="mb-3">
-          <label>Mô tả</label>
-          <textarea
-            name="description"
-            className="form-control"
-            value={form.description}
-            onChange={handleChange}
-          />
-        </div>
-
-        <button type="submit" className="btn btn-primary" disabled={loading}>
-          {loading ? "Đang cập nhật..." : "Cập nhật thuốc"}
-        </button>
-      </form>
-    </div>
-  );
+    );
 }
 
 export default MedicineEdit;
