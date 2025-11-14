@@ -1,8 +1,8 @@
-import { post, get, getInclude } from "../utils/request";
+import { post,postAdmin, get, getInclude } from "../utils/request";
 
 export const loginAdmin = async (payload) => {
   try {
-    return await post("/admin/auth/login", payload);
+    return await postAdmin("/admin/auth/login", payload);
   } catch (error) {
     console.error("Login error:", error);
     throw error;
