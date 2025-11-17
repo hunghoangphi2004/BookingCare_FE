@@ -1,6 +1,19 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 
 function Header({ profileObj }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const isHome = location.pathname === "/";
+
+  const goToSection = (e, id) => {
+    e.preventDefault();
+    if (!isHome) navigate("/");
+    setTimeout(() => {
+      const el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: "smooth" });
+    }, 150);
+  };
+
   return (
     <header id="header" className="header sticky-top">
       {/* Topbar */}
@@ -26,8 +39,13 @@ function Header({ profileObj }) {
       {/* Branding + Menu + Auth */}
       <div className="branding d-flex align-items-center">
         <div className="container position-relative d-flex align-items-center justify-content-between">
+
           {/* Logo */}
-          <a href="/" className="logo d-flex align-items-center me-auto">
+          <a
+            href="/"
+            className="logo d-flex align-items-center me-auto"
+            onClick={(e) => goToSection(e, "hero")}
+          >
             <div className="header__icon">
               <img
                 src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT49F2ps83MOUp-0Ypzc0N8JoFczuQIt6TZgg&s"
@@ -40,31 +58,35 @@ function Header({ profileObj }) {
           {/* Menu React */}
           <nav id="navmenu" className="navmenu">
             <ul>
-              <li><Link to="/" className="active">Trang chủ</Link></li>
-              <li><Link to="/home">Bác sĩ</Link></li>
-              <li><Link to="/family-doctors">Bác sĩ gia đình</Link></li>
-              <li><Link to="/health">Phòng khám</Link></li>
-              <li><Link to="/admin">Chuyên khoa</Link></li>
+              {/* Chỉ show section khi ở home */}
+              {isHome && (
+                <>
+                  <li><a href="#hero" onClick={(e) => goToSection(e, "hero")}>Trang chủ</a></li>
+                  <li><a href="#doctors" onClick={(e) => goToSection(e, "doctors")}>Bác sĩ</a></li>
+                  <li><a href="#family-doctors" onClick={(e) => goToSection(e, "family-doctors")}>Bác sĩ gia đình</a></li>
+                  <li><a href="#clinics" onClick={(e) => goToSection(e, "clinics")}>Phòng khám</a></li>
+                  <li><a href="#specializations" onClick={(e) => goToSection(e, "specializations")}>Chuyên khoa</a></li>
+                </>
+              )}
 
-              {/* Login/Logout trong menu */}
+              {/* Login/Logout */}
               {profileObj ? (
                 <>
-                  <li><Link to="/user-profile">Profile</Link></li>
-                  <li><Link to="/logout">Đăng xuất</Link></li>
+                  <li><Link to="/ho-so-ca-nhan">Profile</Link></li>
+                  <li><Link to="/dang-xuat">Đăng xuất</Link></li>
                 </>
               ) : (
                 <>
-                  <li><Link to="/login">Đăng nhập</Link></li>
-                  <li><Link to="/register">Đăng ký</Link></li>
+                  <li><Link to="/dang-nhap">Đăng nhập</Link></li>
+                  <li><Link to="/dang-ky">Đăng ký</Link></li>
                 </>
               )}
             </ul>
             <i className="mobile-nav-toggle d-xl-none bi bi-list"></i>
           </nav>
 
-
           {/* CTA Button */}
-          <Link to="/appointment" className="cta-btn d-none d-sm-block">Đặt lịch</Link>
+          <Link to="/dat-lich" className="cta-btn d-none d-sm-block">Đặt lịch</Link>
         </div>
       </div>
     </header>

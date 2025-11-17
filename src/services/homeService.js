@@ -9,11 +9,26 @@ export const getAllSpecialization = async () => {
     return result;
 }
 
+export const getDoctorBySpecializationSlug = async (slug) => {
+    const result = await get(`/home/get-doctor-by-specialization-slug/${slug}`);
+    return result;
+}
+
+export const getDoctorByClinicSlug = async (slug) => {
+    const result = await get(`/home/get-doctor-by-clinic-slug/${slug}`);
+    return result;
+}
 
 export const getAllDoctor = async () => {   
     const result = await get("/home/get-all-doctor");
     return result;
 }
+
+export const getAllFeaturedDoctor = async () => {   
+    const result = await get("/home/get-all-featured-doctor");
+    return result;
+}
+
 
 export const getDoctorBySlug = async (slug) => {   
     const result = await get(`/home/get-doctor-by-slug/${slug}`);
@@ -21,6 +36,10 @@ export const getDoctorBySlug = async (slug) => {
     return result;
 }
 
+export const getAllFamilyDoctor = async () => {   
+    const result = await get("/home/get-all-family-doctor");
+    return result;
+}
 
 // export const sendRegisterOTP = async (payload) => {
 //     const result = await post("/auth/send-register-otp", payload);

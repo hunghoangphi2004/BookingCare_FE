@@ -8,7 +8,7 @@ moment.locale("vi");
 
 const API_DOMAIN = process.env.REACT_APP_API_DOMAIN;
 
-function DoctorDetail() {
+function DoctorSchedule() {
     const { slug } = useParams();
     const navigate = useNavigate();
     const [schedule, setSchedule] = useState([]);
@@ -20,11 +20,11 @@ function DoctorDetail() {
     const [error, setError] = useState("");
     const [selectedDay, setSelectedDay] = useState("Thứ 2");
 
-    const daysOfWeek = ["Thứ 2","Thứ 3","Thứ 4","Thứ 5","Thứ 6","Thứ 7","Chủ nhật"];
+    const daysOfWeek = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ nhật"];
 
     const getDateOfWeekday = (dayName) => {
         const today = moment();
-        const map = { "Chủ nhật": 7,"Thứ 2": 1,"Thứ 3": 2,"Thứ 4": 3,"Thứ 5": 4,"Thứ 6": 5,"Thứ 7": 6 };
+        const map = { "Chủ nhật": 7, "Thứ 2": 1, "Thứ 3": 2, "Thứ 4": 3, "Thứ 5": 4, "Thứ 6": 5, "Thứ 7": 6 };
         const targetWeekday = map[dayName];
         const diff = targetWeekday - today.isoWeekday();
         return today.clone().add(diff >= 0 ? diff : diff + 7, "days");
@@ -61,6 +61,7 @@ function DoctorDetail() {
                 const formattedDate = moment(date).format("DD-MM-YYYY");
                 const res = await fetch(`${API_DOMAIN}/schedules/${slug}/date/${formattedDate}`);
                 const data = await res.json();
+                console.log(data);
                 if (data.success && Array.isArray(data.schedules)) setSchedule(data.schedules);
                 else {
                     setError("Không có lịch khám cho ngày này.");
@@ -86,7 +87,8 @@ function DoctorDetail() {
         const profileUser = Cookies.get("profileUser");
         if (!profileUser) {
             alert("Bạn cần đăng nhập để đặt lịch.");
-            return navigate("/login");
+            navigate("/dang-nhap");
+            return;
         }
 
         const payload = {
@@ -116,8 +118,8 @@ function DoctorDetail() {
 
     return (
         <>
-            <div className="container mt-4">
-                <h2>Thông tin bác sĩ {slug}</h2>
+            <div className="container mt-4 my-5">
+                <h2>Lịch khám:</h2>
                 <div className="mb-3">
                     <label className="fw-bold">Chọn ngày:</label>
                     <select
@@ -133,21 +135,21 @@ function DoctorDetail() {
                 </div>
 
                 {loading ? (<p>Đang tải lịch khám...</p>) :
-                 error ? (<p className="text-danger">{error}</p>) :
-                 schedule.length === 0 ? (<p>Không có lịch khám cho ngày này.</p>) :
-                 (<div className="row g-2">
-                     {schedule.map((s, i) => (
-                         <div key={i} className="col-md-3 col-sm-4 col-6">
-                             <div
-                                 className="border rounded p-2 text-center shadow-sm bg-light"
-                                 style={{ cursor: "pointer" }}
-                                 onClick={() => handleBookClick(s.time)}
-                             >
-                                 {s.time}
-                             </div>
-                         </div>
-                     ))}
-                 </div>)
+                    error ? (<p className="text-danger">{error}</p>) :
+                        schedule.length === 0 ? (<p>Không có lịch khám cho ngày này.</p>) :
+                            (<div className="row g-2">
+                                {schedule.map((s, i) => (
+                                    <div key={i} className="col-md-3 col-sm-4 col-6">
+                                        <div
+                                            className="border rounded p-2 text-center shadow-sm bg-light"
+                                            style={{ cursor: "pointer" }}
+                                            onClick={() => handleBookClick(s.time)}
+                                        >
+                                            {s.time}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>)
                 }
             </div>
 
@@ -193,4 +195,4 @@ function DoctorDetail() {
     );
 }
 
-export default DoctorDetail;
+export default DoctorSchedule;

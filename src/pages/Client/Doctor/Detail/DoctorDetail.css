@@ -1,0 +1,477 @@
+/* Global Colors - The following color variables are used throughout the website. Updating them here will change the color scheme of the entire website */
+:root {
+  --background-color: #ffffff;
+  /* Background color for the entire website, including individual sections */
+  --default-color: #444444;
+  /* Default color used for the majority of the text content across the entire website */
+  --heading-color: #2c4964;
+  /* Color for headings, subheadings and title throughout the website */
+  --accent-color: #1977cc;
+  /* Accent color that represents your brand on the website. It's used for buttons, links, and other elements that need to stand out */
+  --surface-color: #ffffff;
+  /* The surface color is used as a background of boxed elements within sections, such as cards, icon boxes, or other elements that require a visual separation from the global background. */
+  --contrast-color: #ffffff;
+  /* Contrast color for text, ensuring readability against backgrounds of accent, heading, or default colors. */
+}
+
+.doctor-detail-container {
+  padding: 2rem 0;
+  background: #f8f9fa;
+  min-height: 100vh;
+}
+
+/* Header */
+.doctor-header {
+  background: #0ea5e9;
+  color: white;
+  padding: 1.5rem;
+  border-radius: 8px 8px 0 0;
+  margin-bottom: 2rem;
+}
+
+.doctor-header h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+/* Cards */
+.doctor-card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+}
+
+.doctor-card-header {
+  background: #f8f9fa;
+  padding: 1rem 1.25rem;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.doctor-card-header h5 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.doctor-card-body {
+  padding: 1.5rem;
+}
+
+/* Avatar */
+.doctor-avatar-wrapper {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.doctor-avatar {
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #e5e7eb;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.experience-badge {
+  display: inline-block;
+  background: #0ea5e9;
+  color: white;
+  padding: 0.4rem 1rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-top: 0.8rem;
+}
+
+/* Info Sections */
+.doctor-name {
+  color: #0ea5e9;
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+
+.info-box {
+  border-left: 3px solid #0ea5e9;
+  padding-left: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.info-box.success {
+  border-left-color: #10b981;
+}
+
+.info-box.info {
+  border-left-color: #06b6d4;
+}
+
+.info-box.warning {
+  border-left-color: #f59e0b;
+}
+
+.info-box small {
+  display: block;
+  color: #64748b;
+  font-size: 0.85rem;
+  margin-bottom: 0.2rem;
+}
+
+.info-box .info-value {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 0.95rem;
+}
+
+/* Specialization Card */
+.specialization-card {
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.specialization-card h5 {
+  color: #0369a1;
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+}
+
+.specialization-card p {
+  color: #475569;
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* Additional Info */
+.info-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.info-list li {
+  padding: 0.6rem 0;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.info-list li:last-child {
+  border-bottom: none;
+}
+
+.info-list li i {
+  color: #94a3b8;
+  width: 20px;
+}
+
+.info-list li strong {
+  color: #475569;
+  min-width: 100px;
+}
+
+.info-list code {
+  background: #f1f5f9;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+/* Clinic Card */
+.clinic-card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+}
+
+.clinic-card-header {
+  background: #10b981;
+  color: white;
+  padding: 1rem 1.25rem;
+}
+
+.clinic-card-header h5 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.clinic-name {
+  color: #10b981;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.8rem;
+}
+
+.clinic-info-item {
+  margin-bottom: 1rem;
+}
+
+.clinic-info-item small {
+  display: block;
+  color: #64748b;
+  font-size: 0.85rem;
+  margin-bottom: 0.3rem;
+}
+
+.clinic-info-item p {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #1e293b;
+}
+
+.clinic-info-item a {
+  color: #0ea5e9;
+  text-decoration: none;
+}
+
+.clinic-info-item a:hover {
+  text-decoration: underline;
+}
+
+/* Booking Card */
+.booking-card {
+  background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
+  border-radius: 8px;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  color: white;
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+}
+
+.booking-card i.fa-calendar-check {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  opacity: 0.9;
+}
+
+.booking-card h5 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.consultation-fee {
+  background: white;
+  color: #0ea5e9;
+  display: inline-block;
+  padding: 0.5rem 1.5rem;
+  border-radius: 20px;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.booking-card p {
+  opacity: 0.9;
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+.btn-book-now {
+  background: white;
+  color: #0ea5e9;
+  border: none;
+  padding: 0.8rem 2rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  width: 100%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-book-now:hover {
+  background: #f0f9ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Contact Card */
+.contact-card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin-top: 1.5rem;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+}
+
+.contact-card-header {
+  background: #06b6d4;
+  color: white;
+  padding: 0.8rem 1rem;
+}
+
+.contact-card-header h6 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.contact-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.btn-contact {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1rem;
+  border-radius: 6px;
+  border: 2px solid;
+  background: white;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.btn-contact.primary {
+  border-color: #0ea5e9;
+  color: #0ea5e9;
+}
+
+.btn-contact.primary:hover {
+  background: #0ea5e9;
+  color: white;
+}
+
+.btn-contact.secondary {
+  border-color: #64748b;
+  color: #64748b;
+}
+
+.btn-contact.secondary:hover {
+  background: #64748b;
+  color: white;
+}
+
+.btn-contact.success {
+  border-color: #10b981;
+  color: #10b981;
+}
+
+.btn-contact.success:hover {
+  background: #10b981;
+  color: white;
+}
+
+/* Loading State */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  gap: 1rem;
+}
+
+.spinner-border {
+  width: 3rem;
+  height: 3rem;
+  border-width: 0.3rem;
+}
+
+/* Error State */
+.error-card {
+  background: white;
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.error-card i {
+  color: #ef4444;
+  margin-bottom: 1rem;
+}
+
+.error-card h4 {
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+}
+
+.error-actions {
+  display: flex;
+  gap: 0.8rem;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .doctor-detail-container {
+    padding: 1rem 0;
+  }
+
+  .doctor-header {
+    margin-bottom: 1rem;
+  }
+
+  .doctor-header h1 {
+    font-size: 1.2rem;
+  }
+
+  .doctor-avatar {
+    width: 140px;
+    height: 140px;
+  }
+
+  .doctor-name {
+    font-size: 1.4rem;
+  }
+
+  .info-box {
+    margin-bottom: 0.8rem;
+  }
+
+  .booking-card {
+    padding: 1.5rem 1rem;
+  }
+
+  .btn-book-now {
+    padding: 0.7rem 1.5rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .doctor-avatar {
+    width: 120px;
+    height: 120px;
+  }
+
+  .experience-badge {
+    font-size: 0.85rem;
+    padding: 0.3rem 0.8rem;
+  }
+
+  .doctor-name {
+    font-size: 1.3rem;
+  }
+
+  .info-box .info-value {
+    font-size: 0.9rem;
+  }
+}

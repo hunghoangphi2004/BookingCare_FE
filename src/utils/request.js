@@ -157,6 +157,23 @@ export const patchForm = async (path, formData) => {
   return result;
 };
 
+export const patchFormUser = async (path, formData) => {
+   const token = Cookies.get("tokenUser");
+
+  const response = await fetch(`${API_DOMAIN}/auth/edit-profile`, {
+    method: "PATCH",
+    credentials: "include",
+    headers: {
+      ...(token && { Authorization: `Bearer ${token}` }),
+      // Không set 'Content-Type' khi gửi FormData
+    },
+    body: formData,
+  });
+
+  const result = await response.json();
+  return result;
+};
+
 export const deleteData = async (path) => {
   const token = Cookies.get("token");
   const response = await fetch(API_DOMAIN + path, {

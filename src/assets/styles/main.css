@@ -3132,13 +3132,51 @@ li.ant-menu-item {
   margin-bottom: 40px;
 }
 
-.layout-dashboard .ant-layout-sider.sider-primary .ant-menu-item .active{
+.layout-dashboard .ant-layout-sider.sider-primary .ant-menu-item .active {
   background-color: #fff;
-    /* box-shadow: 0 20px 27px rgb(0 0 0 / 5%); */
-    font-weight: 600;
+  /* box-shadow: 0 20px 27px rgb(0 0 0 / 5%); */
+  font-weight: 600;
 }
 
 .ant-btn svg {
-    margin-right: 1px;
+  margin-right: 1px;
 }
 
+@media (min-width: 1200px) {
+  .hero .content .icon-box h4 {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 10px 0 20px 0;
+    min-height: 48px;
+  }
+}
+
+.slick-next {
+  width: 45px !important;
+  height: 45px !important;
+  border-radius: 12px !important;
+  background: rgba(0, 180, 200, 0.08) !important; /* nền xanh nhạt */
+  display: flex !important;
+  justify-content: center;
+  align-items: center;
+  z-index: 10 !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1) !important;
+  backdrop-filter: blur(4px); /* blur nhẹ giống UI */
+}
+
+
+.slick-next:before {
+  font-size: 24px !important;
+  opacity: 1 !important;
+  color: rgb(0, 150, 170) !important; /* màu xanh teal giống hình */
+}
+
+
+/* Right arrow */
+.slick-next {
+  right: -40px !important;
+}
+
+.slick-slide {
+  padding: 0 10px; 
+}

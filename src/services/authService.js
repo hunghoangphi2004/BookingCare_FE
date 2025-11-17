@@ -1,4 +1,4 @@
-import { post,postAdmin, get, getInclude } from "../utils/request";
+import { post, get, getInclude, patchFormUser } from "../utils/request";
 const API_DOMAIN = process.env.REACT_APP_API_DOMAIN || "http://localhost:3000";
 
 export const loginAdmin = async (payload) => {
@@ -80,3 +80,7 @@ export const getProfileAdmin = async () => {
     throw error;
   }
 };
+
+export const updateProfile = async (data) => {
+  return await patchFormUser(`/auth/edit-profile`, data);
+}

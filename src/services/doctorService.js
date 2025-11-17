@@ -7,6 +7,7 @@ export const getDoctorById = async (id) => {
 export const getAllDoctor = async (params = {}) => {
   const query = new URLSearchParams(params).toString();
   const url = `/admin/doctors/get-all${query ? `?${query}` : ''}`;
+  console.log(url);
   const result = await getInclude(url);
   return result;
 }

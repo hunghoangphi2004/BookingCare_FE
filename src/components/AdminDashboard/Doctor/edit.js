@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { getDoctorById, updateDoctor } from "../../../services/doctorService";
 import { getAllSpec } from "../../../services/specializationService";
 import { getAllClinic } from "../../../services/clinicService";
-import { Form, Input, Button, Select, InputNumber, Upload, notification } from "antd";
+import { Form, Input, Button, Select, InputNumber, Upload, notification, Switch } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 
 const EditDoctor = () => {
@@ -34,6 +34,8 @@ const EditDoctor = () => {
                         phoneNumber: doc.phoneNumber || "",
                         clinicId: doc.clinicId?._id || "",
                         specializationId: doc.specializationId?._id || "",
+                        isFamilyDoctor: doc.isFamilyDoctor ?? false,
+                        isFeatured: doc.isFeatured ?? false,
                     });
                 }
             } catch (err) {
@@ -135,6 +137,23 @@ const EditDoctor = () => {
                         {specializations.map(s => <Select.Option key={s._id} value={s._id}>{s.name}</Select.Option>)}
                     </Select>
                 </Form.Item>
+
+                <Form.Item
+                    label="Bác sĩ gia đình"
+                    name="isFamilyDoctor"
+                    valuePropName="checked"
+                >
+                    <Switch checkedChildren="Có" unCheckedChildren="Không" />
+                </Form.Item>
+
+                <Form.Item
+                    label="Bác sĩ nổi bật"
+                    name="isFeatured"
+                    valuePropName="checked"
+                >
+                    <Switch checkedChildren="Có" unCheckedChildren="Không" />
+                </Form.Item>
+
 
                 <Form.Item label="Ảnh bác sĩ">
                     <Upload

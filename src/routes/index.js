@@ -18,7 +18,11 @@ import RequestFamilyDoctor from "../pages/Client/RequestFamilyDoctor"
 import AdminLogin from "../pages/Admin/Auth/Login"
 import { Navigate } from "react-router-dom";
 import Dashboard from "../components/AdminDashboard/Dashboard"
-
+import AllSpecialization from "../pages/Client/Specialization/AllSpecialization";
+import AllClinic from "../pages/Client/Clinic/AllClinic";
+import DetailSpecialization from "../pages/Client/Specialization/DetailSpecialization";
+import DetailClinic from "../pages/Client/Clinic/DetailClinic";
+import FeaturedDoctor from "../pages/Client/Doctor/FeaturedDoctor";
 
 export const routes = [
   {
@@ -29,17 +33,22 @@ export const routes = [
       {
         element: <PrivateRoutes />,
         children: [
-          { path: "user-profile", element: <UserProfile /> },
-          { path: "family-profile", element: <FamilyProfile /> },
+          { path: "ho-so-ca-nhan", element: <UserProfile /> },
+          { path: "ho-so-gia-dinh", element: <FamilyProfile /> },
         ],
       },
-      { path: "login", element: <Login /> },
-      { path: "register", element: <Register /> },
-      { path: "logout", element: <Logout /> },
-      { path: "doctor/:slug", element: <DoctorDetail /> },
-      { path: "doctor/:slug/date/:date", element: <DoctorSchedule /> },
-      { path: "family-doctors", element: <FamilyDoctors /> },
-      { path: "family/request/:doctorId", element: <RequestFamilyDoctor /> },
+      { path: "dang-nhap", element: <Login /> },
+      { path: "dang-ky", element: <Register /> },
+      { path: "dang-xuat", element: <Logout /> },
+      { path: "bac-si/:slug", element: <DoctorDetail /> },
+      { path: "bac-si/:slug/ngay/:date", element: <DoctorSchedule /> },
+      { path: "bac-si-gia-dinh", element: <FamilyDoctors /> },
+      { path: "gia-dinh/yeu-cau/:doctorId", element: <RequestFamilyDoctor /> },
+      { path: "kham-chuyen-khoa", element: <AllSpecialization /> },
+      { path: "bac-si-noi-bat", element: <FeaturedDoctor /> },
+      { path: "phong-kham", element: <AllClinic /> },
+      { path: "kham-chuyen-khoa/:slug", element: <DetailSpecialization /> },
+      { path: "phong-kham/:slug", element: <DetailClinic /> }
     ],
   },
 
@@ -54,10 +63,10 @@ export const routes = [
       </AdminRoute>
     ),
     children: [
-    ...adminRoutes,
-    ...doctorRoutes,
-    ...supporterRoutes,
-  ],
+      ...adminRoutes,
+      ...doctorRoutes,
+      ...supporterRoutes,
+    ],
   },
 
   // fallback

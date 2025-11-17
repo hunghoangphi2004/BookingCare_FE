@@ -14,7 +14,7 @@ function Hero() {
         <div className="content row gy-4">
           {/* Why Box */}
           <div className="col-lg-4 d-flex align-items-stretch">
-            <div className="why-box" data-aos="zoom-out" data-aos-delay="200">
+            <div className="why-box" data-aos="fade-zoom-in" data-aos-offset="200" data-aos-easing="ease-in-sine" data-aos-duration="600">
               <h3>Tại sao chọn BookingHealth?</h3>
               <p>
                 Chúng tôi luôn nỗ lực mang đến dịch vụ chăm sóc sức khỏe tốt nhất. Medilab cam kết cung cấp giải pháp an toàn, hiệu quả và đáng tin cậy để phục vụ nhu cầu của bạn. Đội ngũ của chúng tôi luôn tận tâm, chuyên nghiệp và sẵn sàng hỗ trợ bạn trong mọi tình huống.

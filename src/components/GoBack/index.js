@@ -9,7 +9,7 @@ function GoBack(){
 
     return (
         <>
-            <button onClick={handleClick}>Tro lai</button>
+            <button onClick={handleClick}>Trở lại</button>
         </>
     )
 }

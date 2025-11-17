@@ -1,12 +1,16 @@
 import { useEffect, useState } from "react";
-import { getAllClinic, getAllSpecialization, getAllDoctor } from "../../../services/homeService";
+import { getAllClinic, getAllSpecialization, getAllDoctor, getAllFamilyDoctor } from "../../../services/homeService";
 import { useNavigate } from "react-router-dom";
+import Slider from "react-slick";
+import {Link} from "react-router-dom";
+import Hero from "../../../Layouts/LayoutDefault/hero";
 
 function Home() {
     const [dataHomePage, setDataHomePage] = useState({
         specializations: [],
         clinics: [],
-        doctors: []
+        doctors: [],
+        familyDoctors: []
     });
 
     const [loading, setLoading] = useState(true);
@@ -15,17 +19,19 @@ function Home() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [clinicsRes, specializationsRes, doctorsRes] = await Promise.all([
+                const [clinicsRes, specializationsRes, doctorsRes, familyDoctorsRes] = await Promise.all([
                     getAllClinic(),
                     getAllSpecialization(),
-                    getAllDoctor()
+                    getAllDoctor(),
+                    getAllFamilyDoctor()
                 ]);
 
                 setDataHomePage(prev => ({
                     ...prev,
                     clinics: clinicsRes.success ? clinicsRes.data : [],
                     specializations: specializationsRes.success ? specializationsRes.data : [],
-                    doctors: doctorsRes.success ? doctorsRes.data : []
+                    doctors: doctorsRes.success ? doctorsRes.data : [],
+                    familyDoctors: familyDoctorsRes.success ? familyDoctorsRes.data : []
                 }));
             } catch (error) {
                 console.error("Error fetching home page data:", error);
@@ -47,58 +53,17 @@ function Home() {
 
 
     const handleDoctorClick = (slug) => {
-        navigate(`doctor/${slug}`)
+        navigate(`bac-si/${slug}`)
+    }
+
+    const handleDoctorFamilyClick = (doctorId) => {
+        navigate(`gia-dinh/yeu-cau/${doctorId}`)
     }
 
     return (
-        <>
-            {/* <section className="services">
-                <h2 className="services__title">
-                    Nền tảng đặt lịch khám bệnh, chăm sóc răng miệng và làm đẹp
-                </h2>
-                <p className="services__subtitle">
-                    Tìm các bác sĩ, phòng khám &amp; bệnh viện tốt nhất gần bạn.
-                </p>
-
-                <div className="search-box">
-                    <form>
-                        <div
-                            className="mb-3 search-location aos aos-init aos-animate"
-                        >
-                            <input
-                                className="form-control"
-                                placeholder="Tìm vị trí"
-                                type="text"
-                            />
-                            <span className="form-text">Dựa trên vị trí của bạn</span>
-                        </div>
-
-                        <div
-                            className="mb-3 search-info aos aos-init aos-animate"
-                            data-aos="fade-up"
-                        >
-                            <input
-                                className="form-control"
-                                placeholder="Tìm bác sĩ, phòng khám, bệnh viện, bệnh lý..."
-                                type="text"
-                            />
-                            <span className="form-text">
-                                Ví dụ: Khám răng hoặc kiểm tra đường huyết...
-                            </span>
-                        </div>
-
-                        <button
-                            type="submit"
-                            className="btn btn-primary search-btn mt-0 aos aos-init aos-animate"
-                        >
-                            <i className="fas fa-search"></i> <span>Tìm kiếm</span>
-                        </button>
-                    </form>
-                </div>
-            </section> */}
-
-
-            <section className="features">
+        <>  
+            <Hero />
+            <section className="features" data-aos="fade-zoom-in" data-aos-offset="200" data-aos-easing="ease-in-sine" data-aos-duration="600">
                 <div className="container">
                     <div className="for-you">
                         <div className="for-you__title mt-4 mb-5">
@@ -128,153 +93,216 @@ function Home() {
                             </div>
                         </div>
                     </div>
-
-                    {/* Specializations Section */}
-                    <div className="specialization">
-                        <div className="specialization__title">
-                            <span>Chuyên khoa</span>
-                        </div>
-                        <div className="row specialization__menu d-flex justify-content-around">
-                            {dataHomePage.specializations && dataHomePage.specializations.slice(0, 3).map((specialization) => (
-                                <div key={specialization._id} className="col-12 col-md-5 col-lg-3 specialization__item">
-                                    <div className="specialization__image">
-                                        <img
-                                            src={specialization.image || 'khamnhakhoa.png'}
-                                            alt={specialization.name}
-                                            onError={(e) => {
-                                                e.target.src = 'khamnhakhoa.png'; // Fallback image
-                                            }}
-                                        />
-                                    </div>
-                                    <h3>{specialization.name}</h3>
-                                    <p>{specialization.description}</p>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Clinics Section */}
-                    <div className="clinic">
-                        <div className="clinic__title">
-                            <span>Cơ sở y tế</span>
-                        </div>
-                        <div className="row clinic__menu d-flex justify-content-around">
-                            {dataHomePage.clinics && dataHomePage.clinics.slice(0, 3).map((clinic) => (
-                                <div key={clinic._id} className="col-12 col-md-5 col-lg-3 clinic__item">
-                                    <div className="clinic__image">
-                                        <img
-                                            src={clinic.image || 'cosoyte.png'}
-                                            alt={clinic.name}
-                                            onError={(e) => {
-                                                e.target.src = 'cosoyte.png'; // Fallback image
-                                            }}
-                                        />
-                                    </div>
-                                    <h3>{clinic.name}</h3>
-                                    <p>{clinic.address}</p>
-                                    <p>Giờ mở cửa: {clinic.openingHours}</p>
-                                    <p>SĐT: {clinic.phone}</p>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
                 </div>
+            </section>
+            <section id="doctors" className="doctor">
+                <div className="container">
+                    <div className="doctor__title d-flex justify-content-between align-items-center">
+                        <span>Bác sĩ nổi bật</span>
+                        <Link className="more" to="bac-si-noi-bat">Xem thêm</Link>
+                    </div>
 
-                {/* Doctors Section */}
-                <div className="doctor">
-                    <div className="container">
-                        <div className="doctor__title">
-                            <span>Bác sĩ nổi bật</span>
-                        </div>
-                        <div className="row doctor__menu d-flex justify-content-around">
-                            {dataHomePage.doctors && dataHomePage.doctors.slice(0, 3).map((doctor) => (
-                                <div key={doctor._id} className="col-12 col-md-5 col-lg-3 doctor__item" onClick={() => handleDoctorClick(doctor.slug)} style={{ cursor: 'pointer' }}>
+                    <Slider
+                        infinite={true}
+                        speed={500}
+                        slidesToShow={3}
+                        slidesToScroll={3}
+                        swipeToSlide={true}
+                        arrows={true}
+                        responsive={[
+                            {
+                                breakpoint: 992,
+                                settings: {
+                                    slidesToShow: 2,
+                                }
+                            },
+                            {
+                                breakpoint: 576,
+                                settings: {
+                                    slidesToShow: 1,
+                                }
+                            }
+                        ]}
+                    >
+                        {dataHomePage.doctors &&
+                            dataHomePage.doctors.slice(0, 10).map((doctor) => (
+                                <div
+                                    key={doctor._id}
+                                    className="doctor__item px-2"
+                                    onClick={() => handleDoctorClick(doctor.slug)}
+                                    style={{ cursor: "pointer" }}
+                                >
                                     <div className="doctor__image">
                                         <img
-                                            src={doctor.thumbnail || 'bacsi.png'}
+                                            src={doctor.thumbnail || "bacsi.png"}
                                             alt={doctor.name || doctor.userId?.email}
-                                            onError={(e) => {
-                                                e.target.src = 'bacsi.png'; // Fallback image
-                                            }}
+                                            onError={(e) => (e.target.src = "bacsi.png")}
                                         />
                                     </div>
                                     <h3>{doctor.name || doctor.userId?.email}</h3>
+
                                     {doctor.specializationId && (
                                         <p>Chuyên khoa: {doctor.specializationId.name}</p>
                                     )}
-                                    {doctor.clinicId && (
-                                        <p>Phòng khám: {doctor.clinicId.name}</p>
-                                    )}
-                                    <p>Kinh nghiệm: {doctor.experience} năm</p>
-                                    <p>Phí tư vấn: {doctor.consultationFee?.toLocaleString('vi-VN')} VNĐ</p>
                                 </div>
                             ))}
-                        </div>
-                    </div>
-                </div>
-
-                {/* <div className="suggest">
-                    <div className="container">
-                        <div className="suggest__title mt-4 mb-5">
-                            <h2>Gợi ý của BookingCare</h2>
-                        </div>
-                        <div className="row">
-                            <div className="col-4 suggest__item">
-                                <img src="cosoyte.png" alt="Cơ sở y tế" />
-                                <h3 className="mt-4">Được quan tâm</h3>
-                            </div>
-                            <div className="col-4 suggest__item">
-                                <img src="bacsi.png" alt="Bác sĩ" />
-                                <h3 className="mt-4">Y tế nổi bật</h3>
-                            </div>
-                            <div className="col-4 suggest__item">
-                                <img src="chuyenkhoa.png" alt="Chuyên khoa" />
-                                <h3 className="mt-4">Bài viết liên quan</h3>
-                            </div>
-                        </div>
-                    </div>
-                </div> */}
-
-                {/* <div className="QA">
-                    <div className="container">
-                        <div className="QA__title mt-4 mb-5">
-                            <h2>Bác sĩ hỏi đáp</h2>
-                        </div>
-                        <div className="row d-flex">
-                            <div className="col-4 QA__item">
-                                <img src="cosoyte.png" alt="Cơ sở y tế" />
-                                <h3 className="mt-4">Hỏi bác sĩ miễn phí</h3>
-                            </div>
-                            <div className="col-4 QA__item">
-                                <img src="bacsi.png" alt="Bác sĩ" />
-                                <h3 className="mt-4">Cẩm nang hỏi đáp</h3>
-                            </div>
-                        </div>
-                    </div>
-                </div> */}
-
-                <div className="post">
-                    <div className="container">
-                        <div className="post__title mt-4 mb-5">
-                            <h2>Bài viết</h2>
-                        </div>
-                        <div className="row">
-                            <div className="col-12 col-md-6 col-lg-4 post__item">
-                                <img src="surgery.jpg" alt="Cơ sở y tế" />
-                                <h3 className="mt-4">Được quan tâm</h3>
-                            </div>
-                            <div className="col-12 col-md-6 col-lg-4 post__item">
-                                <img src="otolaryngology.jpg" alt="Bác sĩ" />
-                                <h3 className="mt-4">Y tế nổi bật</h3>
-                            </div>
-                            <div className="col-12 col-md-6 col-lg-4 post__item">
-                                <img src="medicine.jpg" alt="Chuyên khoa" />
-                                <h3 className="mt-4">Bài viết liên quan</h3>
-                            </div>
-                        </div>
-                    </div>
+                    </Slider>
                 </div>
             </section>
+
+            {/* Doctors Section */}
+            <section id="family-doctors" className="doctor">
+                <div className="container">
+                    <div className="doctor__title d-flex justify-content-between align-items-center">
+                        <span>Bác sĩ gia đình</span>
+                        <Link className="more" to="bac-si-gia-dinh">Xem thêm</Link>
+                    </div>
+                    <Slider
+                        infinite={true}
+                        speed={500}
+                        slidesToShow={3}
+                        slidesToScroll={3}
+                        swipeToSlide={true}
+                        arrows={true}
+                        responsive={[
+                            {
+                                breakpoint: 992,
+                                settings: {
+                                    slidesToShow: 2,
+                                }
+                            },
+                            {
+                                breakpoint: 576,
+                                settings: {
+                                    slidesToShow: 1,
+                                }
+                            }
+                        ]}
+                    >
+                        {dataHomePage.familyDoctors && dataHomePage.familyDoctors.slice(0, 10).map((doctor) => (
+                            <div key={doctor._id} className="col-12 col-md-5 col-lg-3 doctor__item" onClick={() => handleDoctorFamilyClick(doctor._id)} style={{ cursor: 'pointer' }}>
+                                <div className="doctor__image">
+                                    <img
+                                        src={doctor.thumbnail || 'bacsi.png'}
+                                        alt={doctor.name || doctor.userId?.email}
+                                        onError={(e) => {
+                                            e.target.src = 'bacsi.png'; // Fallback image
+                                        }}
+                                    />
+                                </div>
+                                <h3>{doctor.name || doctor.userId?.email}</h3>
+                                {doctor.specializationId && (
+                                    <p>Chuyên khoa: {doctor.specializationId.name}</p>
+                                )}
+                                {doctor.clinicId && (
+                                    <p>Phòng khám: {doctor.clinicId.name}</p>
+                                )}
+                                <p>Kinh nghiệm: {doctor.experience} năm</p>
+                                <p>Phí tư vấn: {doctor.consultationFee?.toLocaleString('vi-VN')} VNĐ</p>
+                            </div>
+                        ))}
+                    </Slider>
+                </div>
+            </section>
+
+            {/* Clinics Section */}
+            <section id="clinics" className="clinic">
+                <div className="container">
+                    <div className="clinic__title d-flex justify-content-between align-items-center">
+                        <span>Cơ sở y tế</span>
+                        <Link className="more" to="phong-kham">Xem thêm</Link>
+                    </div>
+                    <Slider
+                        infinite={true}
+                        speed={500}
+                        slidesToShow={3}
+                        slidesToScroll={3}
+                        swipeToSlide={true}
+                        arrows={true}
+                        responsive={[
+                            {
+                                breakpoint: 992,
+                                settings: {
+                                    slidesToShow: 2,
+                                }
+                            },
+                            {
+                                breakpoint: 576,
+                                settings: {
+                                    slidesToShow: 1,
+                                }
+                            }
+                        ]}
+                    >
+                          {dataHomePage.clinics && dataHomePage.clinics.slice(0, 10).map((clinic) => (
+                            <div key={clinic._id} className="col-12 col-md-5 col-lg-3 clinic__item">
+                                <div className="clinic__image">
+                                    <img
+                                        src={clinic.image || 'cosoyte.png'}
+                                        alt={clinic.name}
+                                        onError={(e) => {
+                                            e.target.src = 'cosoyte.png'; // Fallback image
+                                        }}
+                                    />
+                                </div>
+                                <h3>{clinic.name}</h3>
+                                <p>{clinic.address}</p>
+                                <p>Giờ mở cửa: {clinic.openingHours}</p>
+                                <p>SĐT: {clinic.phone}</p>
+                            </div>
+                        ))}
+                    </Slider>
+                </div>
+            </section>
+
+            {/* Specializations Section */}
+            <section id="specializations" className="specialization">
+                <div className="container">
+                    <div className="specialization__title d-flex justify-content-between align-items-center">
+                        <span>Chuyên khoa</span>
+                        <Link className="more" to="kham-chuyen-khoa">Xem thêm</Link>
+                    </div>
+                    <Slider
+                        infinite={true}
+                        speed={500}
+                        slidesToShow={3}
+                        slidesToScroll={3}
+                        swipeToSlide={true}
+                        arrows={true}
+                        responsive={[
+                            {
+                                breakpoint: 992,
+                                settings: {
+                                    slidesToShow: 2,
+                                }
+                            },
+                            {
+                                breakpoint: 576,
+                                settings: {
+                                    slidesToShow: 1,
+                                }
+                            }
+                        ]}
+                    >
+                           {dataHomePage.specializations && dataHomePage.specializations.slice(0, 10).map((specialization) => (
+                            <div key={specialization._id} className="col-12 col-md-5 col-lg-3 specialization__item">
+                                <div className="specialization__image">
+                                    <img
+                                        src={specialization.image || 'khamnhakhoa.png'}
+                                        alt={specialization.name}
+                                        onError={(e) => {
+                                            e.target.src = 'khamnhakhoa.png'; 
+                                        }}
+                                    />
+                                </div>
+                                <h3>{specialization.name}</h3>
+                                <p>{specialization.description}</p>
+                            </div>
+                        ))}
+                    </Slider>
+                </div>
+            </section>
+
         </>
     );
 }

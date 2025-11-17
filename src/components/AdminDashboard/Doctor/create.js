@@ -152,6 +152,14 @@ const DoctorCreate = () => {
                     <Switch checkedChildren="Có" unCheckedChildren="Không" />
                 </Form.Item>
 
+                <Form.Item
+                    label="Bác sĩ nổi bật"
+                    name="isFeatured"
+                    valuePropName="checked" 
+                >
+                    <Switch checkedChildren="Có" unCheckedChildren="Không" />
+                </Form.Item>
+
                 <Form.Item label="Ảnh bác sĩ">
                     <Upload
                         beforeUpload={(file) => {

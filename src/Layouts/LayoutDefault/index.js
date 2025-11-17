@@ -16,6 +16,8 @@ import '@fortawesome/fontawesome-free/css/all.min.css';
 import './style.css'
 import AOS from 'aos';
 import 'aos/dist/aos.css';
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
 
 function LayoutDefault() {
     const profile = Cookies.get("profileUser");
@@ -23,19 +25,35 @@ function LayoutDefault() {
     const navigate = useNavigate();
     useEffect(() => {
         AOS.init({ duration: 1000, once: true });
+
+        const scripts = [
+            "/assets/vendor/aos/aos.js",
+            "/assets/vendor/glightbox/js/glightbox.min.js",
+            "/assets/vendor/swiper/swiper-bundle.min.js",
+            "/assets/vendor/purecounter/purecounter_vanilla.js",
+            "/assets/js/main.js"
+        ];
+
+        scripts.forEach(src => {
+            const script = document.createElement("script");
+            script.src = src;
+            script.async = false;      // quan trọng: phải giữ thứ tự
+            document.body.appendChild(script);
+        });
+
     }, []);
+
 
     return (
         <div className="layout-default">
             <Header profileObj={profileObj} />
-
+            
             <main className="main">
-                <Hero />
                 <Outlet />
             </main>
 
-            <Footer/>
-            
+            <Footer />
+
         </div>
     );
 }
