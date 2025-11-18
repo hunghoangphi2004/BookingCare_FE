@@ -23,6 +23,7 @@ import AllClinic from "../pages/Client/Clinic/AllClinic";
 import DetailSpecialization from "../pages/Client/Specialization/DetailSpecialization";
 import DetailClinic from "../pages/Client/Clinic/DetailClinic";
 import FeaturedDoctor from "../pages/Client/Doctor/FeaturedDoctor";
+import MyAppointments from "../pages/Client/Appointment/MyAppointments";
 
 export const routes = [
   {
@@ -48,7 +49,8 @@ export const routes = [
       { path: "bac-si-noi-bat", element: <FeaturedDoctor /> },
       { path: "phong-kham", element: <AllClinic /> },
       { path: "kham-chuyen-khoa/:slug", element: <DetailSpecialization /> },
-      { path: "phong-kham/:slug", element: <DetailClinic /> }
+      { path: "phong-kham/:slug", element: <DetailClinic /> },
+      { path: "lich-hen", element: <MyAppointments /> }
     ],
   },
 

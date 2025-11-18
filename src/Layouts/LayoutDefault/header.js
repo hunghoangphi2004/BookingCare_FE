@@ -21,10 +21,10 @@ function Header({ profileObj }) {
         <div className="container d-flex justify-content-center justify-content-md-between">
           <div className="contact-info d-flex align-items-center">
             <i className="bi bi-envelope d-flex align-items-center">
-              <a href="mailto:contact@example.com">contact@example.com</a>
+              <a href="mailto:nhph20049@gmail.com">nhph20049@gmail.com</a>
             </i>
             <i className="bi bi-phone d-flex align-items-center ms-4">
-              <span>+1 5589 55488 55</span>
+              <span>+0862 770 487</span>
             </i>
           </div>
           <div className="social-links d-none d-md-flex align-items-center">
@@ -86,7 +86,7 @@ function Header({ profileObj }) {
           </nav>
 
           {/* CTA Button */}
-          <Link to="/dat-lich" className="cta-btn d-none d-sm-block">Đặt lịch</Link>
+          <Link to="/lich-hen" className="cta-btn d-none d-sm-block">Lịch hẹn</Link>
         </div>
       </div>
     </header>

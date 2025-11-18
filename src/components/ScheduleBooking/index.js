@@ -6,7 +6,6 @@ import Swal from "sweetalert2";
 
 const API_DOMAIN = process.env.REACT_APP_API_DOMAIN;
 
-// Cấu hình Toast nhẹ nhàng và chuyên nghiệp
 const Toast = Swal.mixin({
     toast: true,
     position: 'top-end',
@@ -29,7 +28,6 @@ function BookingModal({ show, onClose, doctor, timeSlot, date }) {
     const handleImageChange = (e) => {
         const files = Array.from(e.target.files);
         
-        // Giới hạn tối đa 5 ảnh
         if (files.length + images.length > 5) {
             Toast.fire({
                 icon: 'warning',
@@ -38,7 +36,6 @@ function BookingModal({ show, onClose, doctor, timeSlot, date }) {
             return;
         }
 
-        // Kiểm tra định dạng file
         const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
         const invalidFiles = files.filter(file => !validTypes.includes(file.type));
         
@@ -50,7 +47,6 @@ function BookingModal({ show, onClose, doctor, timeSlot, date }) {
             return;
         }
 
-        // Kiểm tra kích thước file (tối đa 5MB mỗi file)
         const maxSize = 5 * 1024 * 1024; // 5MB
         const oversizedFiles = files.filter(file => file.size > maxSize);
         
@@ -64,7 +60,6 @@ function BookingModal({ show, onClose, doctor, timeSlot, date }) {
 
         setImages(prev => [...prev, ...files]);
 
-        // Tạo preview
         files.forEach(file => {
             const reader = new FileReader();
             reader.onloadend = () => {
@@ -104,14 +99,12 @@ function BookingModal({ show, onClose, doctor, timeSlot, date }) {
         setLoading(true);
 
         try {
-            // Tạo FormData để gửi cả text và file
             const formDataToSend = new FormData();
             formDataToSend.append('doctorId', doctor._id);
             formDataToSend.append('dateBooking', moment(date).format("YYYY-MM-DD"));
             formDataToSend.append('timeBooking', timeSlot.replace(/(\d{2}:\d{2})-(\d{2}:\d{2})/, "$1 - $2"));
             formDataToSend.append('description', formData.description);
 
-            // Thêm các file ảnh
             images.forEach((image) => {
                 formDataToSend.append('images', image);
             });
@@ -127,13 +120,13 @@ function BookingModal({ show, onClose, doctor, timeSlot, date }) {
             if (data.success) {
                 Toast.fire({
                     icon: 'success',
-                    title: 'Đặt lịch thành công!'
+                    title: 'Yêu cầu đặt lịch thành công, vui lòng kiểm tra email để xác nhận!'
                 });
                 handleClose();
             } else {
                 Toast.fire({
                     icon: 'error',
-                    title: data.message || 'Đặt lịch thất bại',
+                    title: data.message || 'Yêu cầu đặt lịch thất bại',
                     timer: 4000
                 });
             }

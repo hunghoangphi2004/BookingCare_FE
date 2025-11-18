@@ -25,9 +25,8 @@ export const adminMenu = [
 ];
 
 export const doctorMenu = [
-  { path: "/admin/doctor/dashboard", label: "Tổng quan", icon: <HomeOutlined /> },
-  { path: "/admin/doctor/schedules", label: "Quản lý kế hoạch khám bệnh", icon: <CalendarOutlined /> },
-  { path: "/admin/doctor/request-family-doctor", label: "Quản lý Yêu cầu Bác sĩ gia đình", icon: <FileTextOutlined /> },
+  { path: "/admin/doctor/schedules", label: "Quản lý lịch khám", icon: <CalendarOutlined /> },
+  { path: "/admin/doctor/request-family-doctor", label: "Bác sĩ gia đình", icon: <FileTextOutlined /> },
   { path: "/admin/doctor/family", label: "Quản lý gia đình", icon: <TeamOutlined /> },
   { path: "/admin/doctor/appointments", label: "Lịch hẹn", icon: <CalendarOutlined /> },
   { path: "/admin/doctor/my-prescriptions", label: "Quản lý toa thuốc", icon: <FileTextOutlined /> },

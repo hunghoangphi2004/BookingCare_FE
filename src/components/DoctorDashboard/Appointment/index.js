@@ -22,6 +22,7 @@ function DoctorCalendar() {
     try {
       setLoading(true);
       const res = await getMyAppointmentsByDoctor();
+      console.log("Lịch khám bác sĩ:", res);
 
       if (res.success) {
         setDoctor(res.doctor);
@@ -82,11 +83,8 @@ function DoctorCalendar() {
           />
           <div>
             <Title level={3} style={{ marginBottom: 0 }}>
-              📅 Lịch khám của {doctor?.name}
+              Lịch khám của bác sĩ {doctor?.name}
             </Title>
-            <Text type="secondary">
-              <CalendarOutlined /> Lịch làm việc trong tuần
-            </Text>
           </div>
         </Space>
       </Card>

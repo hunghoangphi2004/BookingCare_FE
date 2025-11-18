@@ -15,3 +15,9 @@ export const getMyAppointmentsByDoctor = async (params = {}) => {
   const result = await getInclude(url);
   return result;
 };
+
+export const getMyAppointmentsByUser = async (params = {}) => {
+  const url = `/appointments/get-my-appointments`;
+  const result = await getInclude(url);
+  return result;
+};

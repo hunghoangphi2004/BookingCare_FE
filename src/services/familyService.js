@@ -112,7 +112,7 @@ export const approveFamilyDoctor = async (familyId) => {
 // Từ chối yêu cầu
 export const rejectFamilyDoctor = async (familyId, reason = "") => {
   try {
-    const result = await put(`/doctors/reject-family-doctor/${familyId}`, { reason });
+    const result = await patch(`/admin/doctors/reject-family-doctor/${familyId}`, { reason });
     return result;
   } catch (error) {
     console.error("Error rejecting family doctor:", error);

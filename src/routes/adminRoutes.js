@@ -1,4 +1,5 @@
 // routes/adminRoutes.js
+import { Navigate } from "react-router-dom";
 import Schedule from "../components/AdminDashboard/Schedule";
 import Doctors from "../components/AdminDashboard/Doctor";
 import DoctorCreate from "../components/AdminDashboard/Doctor/create";
@@ -28,6 +29,7 @@ import ProfilePage from "../components/Profile";
 import Dashboard from "../components/AdminDashboard/Dashboard";
 
 export const adminRoutes = [
+  { path: "", element: <Navigate to="dashboard" replace /> },
   { path: "dashboard", element: <Dashboard /> },
   { path: "schedules", element: <Schedule /> },
   { path: "doctors", element: <Doctors /> },

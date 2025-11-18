@@ -11,7 +11,7 @@ function Logout() {
   useEffect(() => {
     const logout = async () => {
       try {
-        const token = Cookies.get("token");
+        const token = Cookies.get("tokenUser");
 
         await fetch("http://localhost:3000/auth/logout", {
           method: "POST",
@@ -29,7 +29,7 @@ function Logout() {
         });
 
         dispatch(checkLogin(false));
-        navigate("/login");
+        navigate("/dang-nhap");
       }
     };
 

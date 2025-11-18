@@ -2,171 +2,292 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getFamilyById } from "../../../services/familyService";
 import { getAllDoctor } from "../../../services/doctorService";
+import {
+  Card,
+  Table,
+  Tag,
+  Button,
+  Typography,
+  Space,
+  Spin,
+  Alert,
+  Descriptions,
+  Divider,
+} from "antd";
+import {
+  ArrowLeftOutlined,
+  UserOutlined,
+  TeamOutlined,
+  MedicineBoxOutlined,
+} from "@ant-design/icons";
+
+const { Title, Text } = Typography;
 
 function FamilyDetailInDoctor() {
-    const { id } = useParams();
-    const navigate = useNavigate();
+  const { id } = useParams();
+  const navigate = useNavigate();
 
-    const [family, setFamily] = useState(null);
-    const [doctorsMap, setDoctorsMap] = useState({});
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
+  const [family, setFamily] = useState(null);
+  const [doctorsMap, setDoctorsMap] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                setLoading(true);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
 
-                const res = await getFamilyById(id);
-                console.log(res)
-                if (res?.success && res?.family?.family) {
-                    setFamily(res.family.family);
-                } else {
-                    setError(res?.message || "Không tải được dữ liệu gia đình");
-                    return;
-                }
+        const res = await getFamilyById(id);
+        console.log(res);
+        if (res?.success && res?.family?.family) {
+          setFamily(res.family.family);
+        } else {
+          setError(res?.message || "Không tải được dữ liệu gia đình");
+          return;
+        }
 
-                const doctorRes = await getAllDoctor({ limit: 0 });
-                 console.log(doctorRes)
-                if (doctorRes?.success && Array.isArray(doctorRes.data)) {
-                    const map = {};
-                    doctorRes.data.forEach((doc) => {
-                        console.log(doc)
-                        map[doc._id] = doc.name || doc.userId?.email || "Không rõ";
-                    });
-                    setDoctorsMap(map);
-                }
-            } catch (err) {
-                console.error(err);
-                setError("Lỗi khi tải thông tin gia đình");
-            } finally {
-                setLoading(false);
+        const doctorRes = await getAllDoctor({ limit: 0 });
+        console.log(doctorRes);
+        if (doctorRes?.success && Array.isArray(doctorRes.data)) {
+          const map = {};
+          doctorRes.data.forEach((doc) => {
+            console.log(doc);
+            map[doc._id] = doc.name || doc.userId?.email || "Không rõ";
+          });
+          setDoctorsMap(map);
+        }
+      } catch (err) {
+        console.error(err);
+        setError("Lỗi khi tải thông tin gia đình");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [id]);
+
+  // Columns cho bảng thành viên
+  const memberColumns = [
+    {
+      title: "#",
+      key: "index",
+      width: 60,
+      render: (_, __, index) => index + 1,
+    },
+    {
+      title: "Họ tên",
+      dataIndex: "fullName",
+      key: "fullName",
+    },
+    {
+      title: "Quan hệ",
+      dataIndex: "relationship",
+      key: "relationship",
+      render: (text) => text || "—",
+    },
+    {
+      title: "Giới tính",
+      dataIndex: "gender",
+      key: "gender",
+    },
+    {
+      title: "Ngày sinh",
+      dataIndex: "dateOfBirth",
+      key: "dateOfBirth",
+      render: (date) =>
+        date ? new Date(date).toLocaleDateString() : "—",
+    },
+    {
+      title: "Số điện thoại",
+      dataIndex: "phoneNumber",
+      key: "phoneNumber",
+      render: (text) => text || "—",
+    },
+  ];
+
+  // Columns cho bảng bác sĩ gia đình
+  const doctorColumns = [
+    {
+      title: "#",
+      key: "index",
+      width: 60,
+      render: (_, __, index) => index + 1,
+    },
+    {
+      title: "Bác sĩ",
+      dataIndex: "doctorId",
+      key: "doctorId",
+      render: (doctorId) => doctorsMap[doctorId] || doctorId,
+    },
+    {
+      title: "Ghi chú",
+      dataIndex: "requestNote",
+      key: "requestNote",
+      render: (text) => text || "—",
+    },
+    {
+      title: "Ngày yêu cầu",
+      dataIndex: "requestedAt",
+      key: "requestedAt",
+      render: (date) => new Date(date).toLocaleString(),
+    },
+    {
+      title: "Trạng thái",
+      dataIndex: "status",
+      key: "status",
+      render: (status, record) => (
+        <Space direction="vertical" size="small">
+          <Tag
+            color={
+              status === "approved"
+                ? "success"
+                : status === "pending"
+                ? "warning"
+                : status === "rejected"
+                ? "error"
+                : "default"
             }
-        };
-        fetchData();
-    }, [id]);
+          >
+            {status}
+          </Tag>
+          {record.rejectionReason && (
+            <Text type="secondary" style={{ fontSize: "12px" }}>
+              Lý do: {record.rejectionReason}
+            </Text>
+          )}
+        </Space>
+      ),
+    },
+    {
+      title: "Lịch hẹn",
+      dataIndex: "schedule",
+      key: "schedule",
+      render: (schedule) => {
+        if (!schedule?.startDate) return "—";
+        const startDate = new Date(schedule.startDate).toLocaleDateString();
+        const frequency =
+          schedule.frequency === "weekly"
+            ? `Thứ ${schedule.dayOfWeek + 1}`
+            : `Ngày ${schedule.dayOfMonth}`;
+        return `${startDate} | ${frequency} | ${schedule.timeSlot}`;
+      },
+    },
+  ];
 
-    if (loading) return <p>Đang tải...</p>;
-    if (error) return <div className="alert alert-danger">{error}</div>;
-    if (!family) return <p>Không tìm thấy gia đình</p>;
-
+  if (loading) {
     return (
-        <div className="container mt-4">
-            <div className="d-flex justify-content-between align-items-center mb-3">
-                <h3>Chi tiết hồ sơ gia đình</h3>
-                <button className="btn btn-secondary" onClick={() => navigate("/admin/families")}>
-                    Quay lại
-                </button>
-            </div>
-
-            {/* Thông tin chung */}
-            <div className="card mb-4 shadow-sm">
-                <div className="card-body">
-                    <h5 className="card-title mb-3">Thông tin chung</h5>
-                    <p><strong>Tên gia đình:</strong> {family.familyName}</p>
-                    <p><strong>Chủ hộ:</strong> {family.ownerId?.email || "Không có"}</p>
-                    <p><strong>Ngày tạo:</strong> {new Date(family.createdAt).toLocaleString()}</p>
-                </div>
-            </div>
-
-            {/* Thành viên */}
-            <div className="card mb-4 shadow-sm">
-                <div className="card-body">
-                    <h5 className="card-title">Thành viên</h5>
-                    {family.members?.length > 0 ? (
-                        <table className="table table-bordered table-sm mt-2">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Họ tên</th>
-                                    <th>Quan hệ</th>
-                                    <th>Giới tính</th>
-                                    <th>Ngày sinh</th>
-                                    <th>Số điện thoại</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {family.members.map((m, i) => (
-                                    <tr key={i}>
-                                        <td>{i + 1}</td>
-                                        <td>{m.fullName}</td>
-                                        <td>{m.relationship || "-"}</td>
-                                        <td>{m.gender}</td>
-                                        <td>{m.dateOfBirth ? new Date(m.dateOfBirth).toLocaleDateString() : "-"}</td>
-                                        <td>{m.phoneNumber || "-"}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    ) : (
-                        <p>Không có thành viên nào.</p>
-                    )}
-                </div>
-            </div>
-
-            {/* Bác sĩ gia đình */}
-            <div className="card shadow-sm">
-                <div className="card-body">
-                    <h5 className="card-title">Bác sĩ gia đình</h5>
-                    {family.familyDoctors?.length > 0 ? (
-                        <table className="table table-bordered table-sm mt-2">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Bác sĩ</th>
-                                    <th>Ghi chú</th>
-                                    <th>Ngày yêu cầu</th>
-                                    <th>Trạng thái</th>
-                                    <th>Lịch hẹn</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {family.familyDoctors.map((d, i) => (
-                                    <tr key={i}>
-                                        <td>{i + 1}</td>
-                                        <td>{doctorsMap[d.doctorId] || d.doctorId}</td>
-                                        <td>{d.requestNote || "-"}</td>
-                                        <td>{new Date(d.requestedAt).toLocaleString()}</td>
-                                        <td>
-                                            <span
-                                                className={`badge ${
-                                                    d.status === "approved"
-                                                        ? "bg-success"
-                                                        : d.status === "pending"
-                                                        ? "bg-warning text-dark"
-                                                        : d.status === "rejected"
-                                                        ? "bg-danger"
-                                                        : "bg-secondary"
-                                                }`}
-                                            >
-                                                {d.status}
-                                            </span>
-                                            {d.rejectionReason && (
-                                                <div className="text-muted small mt-1">
-                                                    Lý do: {d.rejectionReason}
-                                                </div>
-                                            )}
-                                        </td>
-                                        <td>
-                                            {d.schedule?.startDate
-                                                ? `${new Date(d.schedule.startDate).toLocaleDateString()} | ${
-                                                      d.schedule.frequency === "weekly"
-                                                          ? `Thứ ${d.schedule.dayOfWeek + 1}`
-                                                          : `Ngày ${d.schedule.dayOfMonth}`
-                                                  } | ${d.schedule.timeSlot}`
-                                                : "-"}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    ) : (
-                        <p>Chưa có bác sĩ gia đình nào.</p>
-                    )}
-                </div>
-            </div>
-        </div>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "400px",
+        }}
+      >
+        <Spin size="large" tip="Đang tải..." />
+      </div>
     );
+  }
+
+  if (error) {
+    return (
+      <div className="container mt-4">
+        <Alert message="Lỗi" description={error} type="error" showIcon />
+      </div>
+    );
+  }
+
+  if (!family) {
+    return (
+      <div className="container mt-4">
+        <Alert
+          message="Không tìm thấy"
+          description="Không tìm thấy gia đình"
+          type="warning"
+          showIcon
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="container py-4">
+      <Space
+        direction="vertical"
+        size="large"
+        style={{ width: "100%", marginBottom: "24px" }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <Title level={3} style={{ margin: 0 }}>
+            Chi tiết hồ sơ gia đình
+          </Title>
+          <Button
+            icon={<ArrowLeftOutlined />}
+            onClick={() => navigate("/admin/families")}
+          >
+            Quay lại
+          </Button>
+        </div>
+
+        {/* Thông tin chung */}
+        <Card title={<><UserOutlined /> Thông tin chung</>}>
+          <Descriptions bordered column={1}>
+            <Descriptions.Item label="Tên gia đình">
+              {family.familyName}
+            </Descriptions.Item>
+            <Descriptions.Item label="Chủ hộ">
+              {family.ownerId?.email || "Không có"}
+            </Descriptions.Item>
+            <Descriptions.Item label="Ngày tạo">
+              {new Date(family.createdAt).toLocaleString()}
+            </Descriptions.Item>
+          </Descriptions>
+        </Card>
+
+        {/* Thành viên */}
+        <Card title={<><TeamOutlined /> Thành viên</>}>
+          {family.members?.length > 0 ? (
+            <Table
+              bordered
+              columns={memberColumns}
+              dataSource={family.members.map((m, i) => ({
+                key: i,
+                ...m,
+              }))}
+              pagination={false}
+              size="small"
+            />
+          ) : (
+            <Text type="secondary">Không có thành viên nào.</Text>
+          )}
+        </Card>
+
+        {/* Bác sĩ gia đình */}
+        <Card title={<><MedicineBoxOutlined /> Bác sĩ gia đình</>}>
+          {family.familyDoctors?.length > 0 ? (
+            <Table
+              bordered
+              columns={doctorColumns}
+              dataSource={family.familyDoctors.map((d, i) => ({
+                key: i,
+                ...d,
+              }))}
+              pagination={false}
+              size="small"
+            />
+          ) : (
+            <Text type="secondary">Chưa có bác sĩ gia đình nào.</Text>
+          )}
+        </Card>
+      </Space>
+    </div>
+  );
 }
 
 export default FamilyDetailInDoctor;

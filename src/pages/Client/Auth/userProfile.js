@@ -78,6 +78,7 @@ function UserProfile() {
   }
 
   const p = profile.patient;
+  console.log(p)
 
   const handleSubmit = async (values) => {
     setLoading(true);
@@ -240,9 +241,9 @@ function UserProfile() {
       </div>
 
       {/* Modal cập nhật */}
-      <Modal
+      <Modal 
         title={
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <div  style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
             <UserOutlined />
             <span>Cập nhật hồ sơ bệnh nhân</span>
           </div>
@@ -360,7 +361,7 @@ function UserProfile() {
               htmlType="submit"
               loading={loading}
               block
-              className="btn-submit"
+              className="btn-submit background-accent"
             >
               Lưu thay đổi
             </Button>

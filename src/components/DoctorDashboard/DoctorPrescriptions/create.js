@@ -15,8 +15,6 @@ const PrescriptionCreate = () => {
     ? JSON.parse(Cookies.get("profile"))
     : null;
   const isDoctor = profile?.role === "doctor";
-  console.log(isDoctor)
-  console.log(profile._id)
 
   const [form] = Form.useForm();
   const navigate = useNavigate();
@@ -61,12 +59,6 @@ const PrescriptionCreate = () => {
       ...values,
       medicines: values.medicines?.filter((m) => m.medicineId) || [],
     };
-
-    if (isDoctor) {
-      body.doctorId = profile.doctor._id; 
-    }
-
-    console.log("Submitting prescription:", body);
 
     setLoading(true);
     try {

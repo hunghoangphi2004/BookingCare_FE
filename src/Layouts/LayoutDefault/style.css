@@ -2218,3 +2218,7 @@ section,
 .Toastify__toast-container {
   z-index: 2000 !important;
 }
+
+.specialization__item p{
+  min-height: 45px;
+}

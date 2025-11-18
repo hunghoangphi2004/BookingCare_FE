@@ -4,6 +4,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { login } from "../../../services/authService";
 import Cookies from "js-cookie";
 import { checkLogin } from "../../../actions/login";
+import "./login.css";
 
 function Login() {
     const navigate = useNavigate();
@@ -19,7 +20,6 @@ function Login() {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setUserFormData((prev) => ({ ...prev, [name]: value }));
-        // Clear error when user starts typing
         if (error) setError("");
     };
 
@@ -47,108 +47,66 @@ function Login() {
     };
 
     return (
-        <div className="container-fluid vh-100 d-flex align-items-center justify-content-center bg-light">
-            <div className="row w-100 justify-content-center">
-                <div className="col-12 col-sm-8 col-md-6 col-lg-4">
-                    <div className="card shadow-lg border-0">
-                        <div className="card-header bg-primary text-white text-center py-4">
-                            <h2 className="mb-0">
-                                <i className="fas fa-user-circle me-2"></i>
-                                Đăng nhập
-                            </h2>
-                            <p className="mb-0 mt-2 opacity-75">Chào mừng bạn trở lại</p>
+        <div className="login-container">
+            <div className="login-card">
+                <div className="login-header">
+                    <h2>Đăng nhập</h2>
+                    <p>Chào mừng bạn trở lại</p>
+                </div>
+
+                <div className="login-body">
+                    {error && (
+                        <div className="error-message">
+                            {error}
+                        </div>
+                    )}
+
+                    <form onSubmit={handleSubmit}>
+                        <div className="form-group">
+                            <label htmlFor="email">Email</label>
+                            <input
+                                type="email"
+                                id="email"
+                                name="email"
+                                value={userFormData.email}
+                                onChange={handleChange}
+                                placeholder="Nhập email của bạn"
+                                required
+                                disabled={loading}
+                            />
                         </div>
 
-                        <div className="card-body p-4">
-                            {error && (
-                                <div className="alert alert-danger d-flex align-items-center mb-3" role="alert">
-                                    <i className="fas fa-exclamation-triangle me-2"></i>
-                                    <div>{error}</div>
-                                </div>
-                            )}
-
-                            <form onSubmit={handleSubmit}>
-                                <div className="mb-3">
-                                    <label htmlFor="email" className="form-label fw-semibold">
-                                        <i className="fas fa-envelope me-2 text-muted"></i>
-                                        Email
-                                    </label>
-                                    <input
-                                        type="email"
-                                        className="form-control form-control-lg"
-                                        id="email"
-                                        name="email"
-                                        value={userFormData.email}
-                                        onChange={handleChange}
-                                        placeholder="Nhập email của bạn"
-                                        required
-                                        disabled={loading}
-                                    />
-                                </div>
-
-                                <div className="mb-4">
-                                    <label htmlFor="password" className="form-label fw-semibold">
-                                        <i className="fas fa-lock me-2 text-muted"></i>
-                                        Mật khẩu
-                                    </label>
-                                    <input
-                                        type="password"
-                                        className="form-control form-control-lg"
-                                        id="password"
-                                        name="password"
-                                        value={userFormData.password}
-                                        onChange={handleChange}
-                                        placeholder="Nhập mật khẩu"
-                                        required
-                                        disabled={loading}
-                                    />
-                                </div>
-
-                                <div className="d-grid mb-3">
-                                    <button
-                                        type="submit"
-                                        className="btn btn-primary btn-lg"
-                                        disabled={loading}
-                                    >
-                                        {loading ? (
-                                            <>
-                                                <span className="spinner-border spinner-border-sm me-2" role="status">
-                                                    <span className="visually-hidden">Loading...</span>
-                                                </span>
-                                                Đang đăng nhập...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <i className="fas fa-sign-in-alt me-2"></i>
-                                                Đăng nhập
-                                            </>
-                                        )}
-                                    </button>
-                                </div>
-
-                                <div className="text-center">
-                                    <Link to="/forgot-password" className="text-decoration-none small">
-                                        Quên mật khẩu?
-                                    </Link>
-                                </div>
-                            </form>
+                        <div className="form-group">
+                            <label htmlFor="password">Mật khẩu</label>
+                            <input
+                                type="password"
+                                id="password"
+                                name="password"
+                                value={userFormData.password}
+                                onChange={handleChange}
+                                placeholder="Nhập mật khẩu"
+                                required
+                                disabled={loading}
+                            />
                         </div>
 
-                        <div className="card-footer bg-light text-center py-3">
-                            <span className="text-muted">Chưa có tài khoản?</span>
-                            <Link to="/register" className="text-decoration-none ms-1 fw-semibold">
-                                Đăng ký ngay
-                            </Link>
-                        </div>
-                    </div>
+                        <button
+                            type="submit"
+                            className="btn-login"
+                            disabled={loading}
+                        >
+                            {loading ? "Đang đăng nhập..." : "Đăng nhập"}
+                        </button>
 
-                    {/* Additional Info */}
-                    <div className="text-center mt-4">
-                        <small className="text-muted">
-                            <i className="fas fa-shield-alt me-1"></i>
-                            Thông tin của bạn được bảo mật tuyệt đối
-                        </small>
-                    </div>
+                        <div className="forgot-password">
+                            <Link to="/forgot-password">Quên mật khẩu?</Link>
+                        </div>
+                    </form>
+                </div>
+
+                <div className="login-footer">
+                    <span>Chưa có tài khoản?</span>
+                    <Link to="/dang-ky">Đăng ký ngay</Link>
                 </div>
             </div>
         </div>

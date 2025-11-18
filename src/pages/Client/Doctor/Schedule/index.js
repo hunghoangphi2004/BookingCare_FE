@@ -2,11 +2,24 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import moment from "moment";
 import Cookies from "js-cookie";
+import Swal from "sweetalert2";
 import "moment/locale/vi";
 
 moment.locale("vi");
 
 const API_DOMAIN = process.env.REACT_APP_API_DOMAIN;
+
+const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+    didOpen: (toast) => {
+        toast.addEventListener('mouseenter', Swal.stopTimer);
+        toast.addEventListener('mouseleave', Swal.resumeTimer);
+    }
+});
 
 function DoctorSchedule() {
     const { slug } = useParams();
@@ -17,6 +30,9 @@ function DoctorSchedule() {
     const [showModal, setShowModal] = useState(false);
     const [selectedTime, setSelectedTime] = useState("");
     const [formData, setFormData] = useState({ description: "" });
+    const [images, setImages] = useState([]);
+    const [imagePreviews, setImagePreviews] = useState([]);
+    const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState("");
     const [selectedDay, setSelectedDay] = useState("Thứ 2");
 
@@ -61,7 +77,6 @@ function DoctorSchedule() {
                 const formattedDate = moment(date).format("DD-MM-YYYY");
                 const res = await fetch(`${API_DOMAIN}/schedules/${slug}/date/${formattedDate}`);
                 const data = await res.json();
-                console.log(data);
                 if (data.success && Array.isArray(data.schedules)) setSchedule(data.schedules);
                 else {
                     setError("Không có lịch khám cho ngày này.");
@@ -76,9 +91,65 @@ function DoctorSchedule() {
         fetchSchedule();
     }, [slug, selectedDay]);
 
+    const handleImageChange = (e) => {
+        const files = Array.from(e.target.files);
+        
+        if (files.length + images.length > 5) {
+            Toast.fire({
+                icon: 'warning',
+                title: 'Chỉ được tải lên tối đa 5 ảnh'
+            });
+            return;
+        }
+
+        const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+        const invalidFiles = files.filter(file => !validTypes.includes(file.type));
+        
+        if (invalidFiles.length > 0) {
+            Toast.fire({
+                icon: 'error',
+                title: 'Chỉ chấp nhận file JPG, PNG, GIF'
+            });
+            return;
+        }
+
+        const maxSize = 5 * 1024 * 1024; // 5MB
+        const oversizedFiles = files.filter(file => file.size > maxSize);
+        
+        if (oversizedFiles.length > 0) {
+            Toast.fire({
+                icon: 'error',
+                title: 'Mỗi ảnh không được vượt quá 5MB'
+            });
+            return;
+        }
+
+        setImages(prev => [...prev, ...files]);
+
+        files.forEach(file => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setImagePreviews(prev => [...prev, reader.result]);
+            };
+            reader.readAsDataURL(file);
+        });
+    };
+
+    const removeImage = (index) => {
+        setImages(prev => prev.filter((_, i) => i !== index));
+        setImagePreviews(prev => prev.filter((_, i) => i !== index));
+    };
+
     const handleBookClick = (time) => {
         setSelectedTime(time);
         setShowModal(true);
+    };
+
+    const handleCloseModal = () => {
+        setShowModal(false);
+        setFormData({ description: "" });
+        setImages([]);
+        setImagePreviews([]);
     };
 
     const handleSubmitBooking = async (e) => {
@@ -86,33 +157,66 @@ function DoctorSchedule() {
 
         const profileUser = Cookies.get("profileUser");
         if (!profileUser) {
-            alert("Bạn cần đăng nhập để đặt lịch.");
-            navigate("/dang-nhap");
+            const result = await Swal.fire({
+                title: 'Yêu cầu đăng nhập',
+                text: 'Bạn cần đăng nhập để đặt lịch khám',
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonColor: '#0d6efd',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Đăng nhập',
+                cancelButtonText: 'Hủy'
+            });
+            
+            if (result.isConfirmed) {
+                navigate("/dang-nhap");
+            }
             return;
         }
 
-        const payload = {
-            doctorId: doctor._id,
-            dateBooking: moment(getDateOfWeekday(selectedDay)).format("YYYY-MM-DD"),
-            timeBooking: selectedTime.replace(/(\d{2}:\d{2})-(\d{2}:\d{2})/, "$1 - $2"),
-            description: formData.description,
-        };
+        setSubmitting(true);
 
         try {
+            const formDataToSend = new FormData();
+            formDataToSend.append('doctorId', doctor._id);
+            formDataToSend.append('dateBooking', moment(getDateOfWeekday(selectedDay)).format("YYYY-MM-DD"));
+            formDataToSend.append('timeBooking', selectedTime.replace(/(\d{2}:\d{2})-(\d{2}:\d{2})/, "$1 - $2"));
+            formDataToSend.append('description', formData.description);
+
+            images.forEach((image) => {
+                formDataToSend.append('images', image);
+            });
+
             const res = await fetch(`${API_DOMAIN}/appointments/create`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
                 credentials: "include",
-                body: JSON.stringify(payload),
+                body: formDataToSend,
             });
+            
             const data = await res.json();
+            
             if (data.success) {
-                alert("✅ Đặt lịch thành công!");
-                setShowModal(false);
-            } else alert("❌ " + (data.message || "Đặt lịch thất bại"));
+                Toast.fire({
+                    icon: 'success',
+                    title: 'Yêu cầu đặt lịch thành công, vui lòng kiểm tra email để xác nhận!'
+                });
+                handleCloseModal();
+            } else {
+                Toast.fire({
+                    icon: 'error',
+                    title: data.message || 'Yêu cầu đặt lịch thất bại',
+                    timer: 4000
+                });
+            }
         } catch (err) {
             console.error(err);
-            alert("Lỗi khi đặt lịch, vui lòng thử lại.");
+            Toast.fire({
+                icon: 'error',
+                title: 'Lỗi kết nối, vui lòng thử lại',
+                timer: 4000
+            });
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -156,39 +260,131 @@ function DoctorSchedule() {
             {showModal && (
                 <>
                     <div className="modal fade show" style={{ display: "block" }}>
-                        <div className="modal-dialog">
+                        <div className="modal-dialog modal-dialog-centered modal-lg">
                             <div className="modal-content">
                                 <div className="modal-header">
                                     <h5 className="modal-title">Đặt lịch khám</h5>
-                                    <button type="button" className="btn-close" onClick={() => setShowModal(false)}></button>
+                                    <button 
+                                        type="button" 
+                                        className="btn-close" 
+                                        onClick={handleCloseModal}
+                                        disabled={submitting}
+                                    ></button>
                                 </div>
 
                                 <form onSubmit={handleSubmitBooking}>
                                     <div className="modal-body">
+                                        <p><strong>Bác sĩ:</strong> {doctor?.name}</p>
                                         <p><strong>Khung giờ:</strong> {selectedTime}</p>
                                         <p><strong>Ngày:</strong> {moment(getDateOfWeekday(selectedDay)).format("DD/MM/YYYY")}</p>
+                                        
                                         <div className="mb-3">
                                             <label className="form-label">Mô tả / Triệu chứng</label>
                                             <textarea
                                                 className="form-control"
                                                 rows="3"
                                                 value={formData.description}
-                                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                                onChange={(e) => setFormData({ description: e.target.value })}
                                                 placeholder="Ví dụ: Đau đầu, chóng mặt 2 ngày nay..."
                                                 required
+                                                disabled={submitting}
                                             ></textarea>
                                         </div>
+
+                                        <div className="mb-3">
+                                            <label className="form-label">
+                                                Ảnh đính kèm (tối đa 5 ảnh)
+                                                <span className="text-muted ms-2" style={{ fontSize: '0.875rem' }}>
+                                                    - Tùy chọn
+                                                </span>
+                                            </label>
+                                            <input
+                                                type="file"
+                                                className="form-control"
+                                                accept="image/*"
+                                                multiple
+                                                onChange={handleImageChange}
+                                                disabled={submitting || images.length >= 5}
+                                            />
+                                            <small className="text-muted">
+                                                Định dạng: JPG, PNG, GIF. Tối đa 5MB/ảnh
+                                            </small>
+                                        </div>
+
+                                        {imagePreviews.length > 0 && (
+                                            <div className="mb-3">
+                                                <label className="form-label">Ảnh đã chọn ({images.length}/5):</label>
+                                                <div className="d-flex flex-wrap gap-2">
+                                                    {imagePreviews.map((preview, index) => (
+                                                        <div 
+                                                            key={index} 
+                                                            className="position-relative"
+                                                            style={{ width: '100px', height: '100px' }}
+                                                        >
+                                                            <img
+                                                                src={preview}
+                                                                alt={`Preview ${index + 1}`}
+                                                                className="img-thumbnail"
+                                                                style={{ 
+                                                                    width: '100%', 
+                                                                    height: '100%', 
+                                                                    objectFit: 'cover' 
+                                                                }}
+                                                            />
+                                                            <button
+                                                                type="button"
+                                                                className="btn btn-danger btn-sm position-absolute top-0 end-0"
+                                                                style={{ 
+                                                                    padding: '2px 6px', 
+                                                                    fontSize: '0.75rem',
+                                                                    borderRadius: '50%'
+                                                                }}
+                                                                onClick={() => removeImage(index)}
+                                                                disabled={submitting}
+                                                            >
+                                                                ×
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
+                                    
                                     <div className="modal-footer">
-                                        <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Hủy</button>
-                                        <button type="submit" className="btn btn-primary">Xác nhận đặt lịch</button>
+                                        <button 
+                                            type="button" 
+                                            className="btn btn-secondary" 
+                                            onClick={handleCloseModal}
+                                            disabled={submitting}
+                                        >
+                                            Hủy
+                                        </button>
+                                        <button 
+                                            type="submit" 
+                                            className="btn btn-primary"
+                                            disabled={submitting}
+                                        >
+                                            {submitting ? (
+                                                <>
+                                                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                                    Đang xử lý...
+                                                </>
+                                            ) : (
+                                                "Xác nhận đặt lịch"
+                                            )}
+                                        </button>
                                     </div>
                                 </form>
                             </div>
                         </div>
                     </div>
 
-                    <div className="modal-backdrop fade show" style={{ zIndex: 1040 }} onClick={() => setShowModal(false)}></div>
+                    <div 
+                        className="modal-backdrop fade show" 
+                        style={{ zIndex: 1040 }} 
+                        onClick={!submitting ? handleCloseModal : undefined}
+                    ></div>
                 </>
             )}
         </>

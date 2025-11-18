@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import DoctorSchedule from "../Schedule";
-import Goback from "../../../../components/GoBack/index"
 import { getDoctorBySlug } from "../../../../services/homeService";
 import "./DoctorDetail.css";
 
@@ -51,7 +50,6 @@ function DoctorDetail() {
     if (loading) {
         return (
             <div className="container doctor-detail-container">
-                <Goback />
                 <div className="loading-state">
                     <div className="spinner-border text-primary" role="status">
                         <span className="visually-hidden">Đang tải...</span>
@@ -65,7 +63,6 @@ function DoctorDetail() {
     if (error) {
         return (
             <div className="container doctor-detail-container">
-                <Goback />
                 <div className="row justify-content-center">
                     <div className="col-md-6">
                         <div className="error-card">
@@ -98,7 +95,6 @@ function DoctorDetail() {
     if (!data) {
         return (
             <div className="container doctor-detail-container">
-                <Goback />
                 <div className="row justify-content-center">
                     <div className="col-md-6">
                         <div className="error-card">
@@ -121,7 +117,6 @@ function DoctorDetail() {
 
     return (
         <div className="container doctor-detail-container">
-            <Goback />
 
             {/* Header */}
             <div className="row">

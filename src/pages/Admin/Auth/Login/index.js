@@ -38,7 +38,7 @@ function AdminLogin() {
                 console.log(role)
                 if (role == "admin") navigate("/admin");
                 else if (role == "supporter") navigate("/admin/supporter");
-                else if (role == "doctor") navigate("/admin/doctor");
+                else if (role == "doctor") navigate("/admin/doctor/appointments");
                 else navigate("/"); 
             }
         } catch (err) {

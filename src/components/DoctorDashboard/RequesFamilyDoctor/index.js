@@ -15,7 +15,7 @@ import {
   Pagination,
   Typography,
   Space,
-  message,
+  Alert,
 } from "antd";
 
 const { Title } = Typography;
@@ -25,6 +25,12 @@ function RequestFamilyDoctorDashboard() {
   const [filters, setFilters] = useState({ page: 1, limit: 10 });
   const [pagination, setPagination] = useState({});
   const [loading, setLoading] = useState(true);
+  const [alert, setAlert] = useState({ show: false, type: "", message: "" });
+
+  const showAlert = (type, message) => {
+    setAlert({ show: true, type, message });
+    setTimeout(() => setAlert({ show: false, type: "", message: "" }), 5000);
+  };
 
   const fetchRequests = async () => {
     try {
@@ -45,11 +51,11 @@ function RequestFamilyDoctorDashboard() {
   const handleApprove = async (familyId, doctorRequestId) => {
     try {
       await approveFamilyDoctor(familyId, doctorRequestId);
-      message.success("Đã duyệt yêu cầu thành công!");
+      showAlert("success", "Đã duyệt yêu cầu thành công!");
       fetchRequests();
     } catch (err) {
       console.error(err);
-      message.error("Lỗi khi duyệt yêu cầu");
+      showAlert("error", "Lỗi khi duyệt yêu cầu");
     }
   };
 
@@ -61,15 +67,18 @@ function RequestFamilyDoctorDashboard() {
       cancelText: "Hủy",
       onOk: async () => {
         const reason = document.getElementById("rejectReason").value;
-        if (!reason) return message.warning("Vui lòng nhập lý do!");
+        if (!reason) {
+          showAlert("warning", "Vui lòng nhập lý do!");
+          return;
+        }
 
         try {
           await rejectFamilyDoctor(familyId, doctorRequestId, reason);
-          message.success("Đã từ chối yêu cầu");
+          showAlert("success", "Đã từ chối yêu cầu");
           fetchRequests();
         } catch (err) {
           console.error(err);
-          message.error("Lỗi khi từ chối yêu cầu");
+          showAlert("error", "Lỗi khi từ chối yêu cầu");
         }
       },
     });
@@ -83,11 +92,11 @@ function RequestFamilyDoctorDashboard() {
       onOk: async () => {
         try {
           await cancelFamilyDoctor(familyId, doctorRequestId);
-          message.info("Đã hủy yêu cầu");
+          showAlert("info", "Đã hủy yêu cầu");
           fetchRequests();
         } catch (err) {
           console.error(err);
-          message.error("Lỗi khi hủy yêu cầu");
+          showAlert("error", "Lỗi khi hủy yêu cầu");
         }
       },
     });
@@ -217,6 +226,16 @@ function RequestFamilyDoctorDashboard() {
   return (
     <div className="container py-4">
       <Title level={3} style={{ marginBottom: 20 }}>Danh sách yêu cầu bác sĩ gia đình</Title>
+
+      {alert.show && (
+        <Alert
+          message={alert.message}
+          type={alert.type}
+          closable
+          onClose={() => setAlert({ show: false, type: "", message: "" })}
+          style={{ marginBottom: 16 }}
+        />
+      )}
 
       <Table
         bordered

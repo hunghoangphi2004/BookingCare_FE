@@ -1,6 +1,19 @@
 import { useEffect, useState } from "react";
 import { getAllFamilyRequests } from "../../../services/familyService";
 import { useNavigate } from "react-router-dom";
+import {
+  Table,
+  Tag,
+  Button,
+  Typography,
+  Space,
+  Spin,
+  Pagination,
+  Card,
+} from "antd";
+import { EyeOutlined, TeamOutlined } from "@ant-design/icons";
+
+const { Title } = Typography;
 
 function ApprovedFamilyDashboard() {
   const [approvedRequests, setApprovedRequests] = useState([]);
@@ -49,80 +62,124 @@ function ApprovedFamilyDashboard() {
     fetchApprovedFamilies();
   }, [filters]);
 
-  if (loading) return <p className="text-center py-5">Đang tải...</p>;
+  const columns = [
+    {
+      title: "#",
+      key: "index",
+      width: 60,
+      render: (_, __, index) =>
+        (filters.page - 1) * filters.limit + index + 1,
+    },
+    {
+      title: "Tên gia đình",
+      dataIndex: "familyName",
+      key: "familyName",
+    },
+    {
+      title: "Chủ hộ",
+      dataIndex: "owner",
+      key: "owner",
+      render: (owner) => owner?.email || "—",
+    },
+    {
+      title: "Ngày duyệt",
+      dataIndex: "approvedAt",
+      key: "approvedAt",
+      render: (date) => (date ? date.slice(0, 10) : "—"),
+    },
+    {
+      title: "Tần suất khám",
+      dataIndex: "schedule",
+      key: "frequency",
+      render: (schedule) => schedule?.frequency || "—",
+    },
+    {
+      title: "Khung giờ",
+      dataIndex: "schedule",
+      key: "timeSlot",
+      render: (schedule) => schedule?.timeSlot || "—",
+    },
+    {
+      title: "Trạng thái",
+      dataIndex: "status",
+      key: "status",
+      render: (status) => (
+        <Tag color="success" style={{ textTransform: "uppercase" }}>
+          {status}
+        </Tag>
+      ),
+    },
+    {
+      title: "Thao tác",
+      key: "action",
+      render: (_, record) => (
+        <Button
+          type="primary"
+          size="small"
+          icon={<EyeOutlined />}
+          onClick={() =>
+            navigate(`/admin/doctor/get-family-by-id/${record.familyId}`)
+          }
+        >
+          Xem chi tiết
+        </Button>
+      ),
+    },
+  ];
+
+  const dataSource = approvedRequests.map((req, i) => ({
+    key: `${req.familyId}-${i}`,
+    ...req,
+  }));
+
+  if (loading) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "400px",
+        }}
+      >
+        <Spin size="large" tip="Đang tải..." />
+      </div>
+    );
+  }
 
   return (
-    <div className="container py-5">
-      <h2 className="mb-4 text-primary">👨‍👩‍👧‍👦 Gia đình đã được duyệt</h2>
+    <div className="container py-4">
+      <Card>
+        <Space direction="vertical" size="large" style={{ width: "100%" }}>
+          <Title level={3} style={{ margin: 0 }}>
+            <TeamOutlined /> Gia đình đã được duyệt
+          </Title>
 
-      <table className="table table-bordered table-hover">
-        <thead className="table-light">
-          <tr>
-            <th>#</th>
-            <th>Tên gia đình</th>
-            <th>Chủ hộ</th>
-            <th>Bác sĩ phụ trách</th>
-            <th>Ngày duyệt</th>
-            <th>Tần suất khám</th>
-            <th>Khung giờ</th>
-            <th>Trạng thái</th>
-            <th>Thao tác</th>
-          </tr>
-        </thead>
-        <tbody>
-          {approvedRequests.length === 0 ? (
-            <tr>
-              <td colSpan="9" className="text-center">
-                Không có yêu cầu nào đã duyệt.
-              </td>
-            </tr>
-          ) : (
-            approvedRequests.map((req, i) => (
-              <tr key={`${req.familyId}-${i}`}>
-                <td>{(filters.page - 1) * filters.limit + i + 1}</td>
-                <td>{req.familyName}</td>
-                <td>{req.owner?.email || "—"}</td>
-                <td>{req.doctor?.name || "—"}</td>
-                <td>{req.approvedAt ? req.approvedAt.slice(0, 10) : "—"}</td>
-                <td>{req.schedule?.frequency || "—"}</td>
-                <td>{req.schedule?.timeSlot || "—"}</td>
-                <td>
-                  <span className="badge bg-success text-uppercase">
-                    {req.status}
-                  </span>
-                </td>
-                <td>
-                  <button
-                    className="btn btn-sm btn-outline-primary"
-                    onClick={() =>
-                      navigate(`/admin/doctor/get-family-by-id/${req.familyId}`)
-                    }
-                  >
-                    Xem chi tiết
-                  </button>
-                </td>
-              </tr>
-            ))
+          <Table
+            bordered
+            columns={columns}
+            dataSource={dataSource}
+            pagination={false}
+            locale={{
+              emptyText: "Không có yêu cầu nào đã duyệt.",
+            }}
+          />
+
+          {pagination.totalPages > 1 && (
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              <Pagination
+                current={pagination.page}
+                total={pagination.total}
+                pageSize={filters.limit}
+                onChange={(page) =>
+                  setFilters((prev) => ({ ...prev, page }))
+                }
+                showSizeChanger={false}
+              />
+            </div>
           )}
-        </tbody>
-      </table>
-
-      {/* Phân trang */}
-      {pagination.totalPages > 1 && (
-        <div className="d-flex justify-content-center gap-2 mt-3">
-          {Array.from({ length: pagination.totalPages }).map((_, i) => (
-            <button
-              key={i}
-              className={`btn ${
-                pagination.page === i + 1 ? "btn-primary" : "btn-outline-primary"
-              } btn-sm`}
-              onClick={() => setFilters((prev) => ({ ...prev, page: i + 1 }))}
-            >
-              {i + 1}
-            </button>
-          ))}
-        </div>
-      )}
+        </Space>
+      </Card>
     </div>
   );
 }
