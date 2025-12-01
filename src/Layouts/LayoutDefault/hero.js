@@ -1,7 +1,7 @@
 function Hero() {
   return (
     <section id="hero" className="hero section light-background">
-      <img src="hero-bg.jpg" alt="Hero Background" data-aos="fade-in" />
+      <img src="herobg.jpg" alt="Hero Background" data-aos="fade-in" />
 
       <div className="container position-relative">
         {/* Welcome */}
@@ -17,13 +17,13 @@ function Hero() {
             <div className="why-box" data-aos="fade-zoom-in" data-aos-offset="200" data-aos-easing="ease-in-sine" data-aos-duration="600">
               <h3>Tại sao chọn BookingHealth?</h3>
               <p>
-                Chúng tôi luôn nỗ lực mang đến dịch vụ chăm sóc sức khỏe tốt nhất. Medilab cam kết cung cấp giải pháp an toàn, hiệu quả và đáng tin cậy để phục vụ nhu cầu của bạn. Đội ngũ của chúng tôi luôn tận tâm, chuyên nghiệp và sẵn sàng hỗ trợ bạn trong mọi tình huống.
+                Chúng tôi luôn nỗ lực mang đến dịch vụ chăm sóc sức khỏe tốt nhất. BookingHealth cam kết cung cấp giải pháp an toàn, hiệu quả và đáng tin cậy để phục vụ nhu cầu của bạn. Đội ngũ của chúng tôi luôn tận tâm, chuyên nghiệp và sẵn sàng hỗ trợ bạn trong mọi tình huống.
               </p>
-              <div className="text-center">
+              {/* <div className="text-center">
                 <a href="#about" className="more-btn">
                   <span>Xem thêm</span> <i className="bi bi-chevron-right"></i>
                 </a>
-              </div>
+              </div> */}
             </div>
           </div>
 

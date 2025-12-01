@@ -72,7 +72,7 @@ function Header({ profileObj }) {
               {/* Login/Logout */}
               {profileObj ? (
                 <>
-                  <li><Link to="/ho-so-ca-nhan">Profile</Link></li>
+                  <li><Link to="/ho-so-ca-nhan">Hồ sơ</Link></li>
                   <li><Link to="/dang-xuat">Đăng xuất</Link></li>
                 </>
               ) : (

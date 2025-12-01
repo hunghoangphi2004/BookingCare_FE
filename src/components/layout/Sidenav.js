@@ -33,7 +33,7 @@ function Sidenav({ color }) {
     <div className="sidenav">
       <div className="brand">
         <img src={logo} alt="logo" />
-        <span>Muse Dashboard</span>
+        <span>Trang quản trị</span>
       </div>
       <hr />
       <Menu theme="light" mode="inline" selectedKeys={[pathname]}>

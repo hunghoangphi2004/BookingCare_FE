@@ -244,13 +244,6 @@ function DoctorDetail() {
                         <p>
                             Đặt lịch ngay để được bác sĩ tư vấn và khám chữa bệnh
                         </p>
-                        <button
-                            className="btn-book-now"
-                            onClick={handleBookAppointment}
-                        >
-                            <i className="fas fa-calendar-plus me-2"></i>
-                            Đặt lịch ngay
-                        </button>
                     </div>
 
                     {/* Contact Card */}

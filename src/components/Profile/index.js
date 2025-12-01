@@ -19,6 +19,7 @@ export default function ProfilePage() {
     }
 
     const profileObj = JSON.parse(profileCookie);
+    console.log("Loaded profile:", profileObj); 
 
     if (!["admin", "doctor", "supporter"].includes(profileObj.role)) {
       message.error("Bạn không có quyền truy cập trang này!");
@@ -46,9 +47,9 @@ export default function ProfilePage() {
           <>
             <Text>Email: {profile.email}</Text>
             <br />
-            <Text>Specialty: {profile.specialty || "Chưa cập nhật"}</Text>
+            <Text>Số giấy phép: {profile.doctor.licenseNumber || "Chưa cập nhật"}</Text>
             <br />
-            <Text>License: {profile.license || "Chưa cập nhật"}</Text>
+            <Text>Số điện thoại: {profile.doctor.phoneNumber || "Chưa cập nhật"}</Text>
           </>
         );
       case "supporter":
@@ -56,9 +57,9 @@ export default function ProfilePage() {
           <>
             <Text>Email: {profile.email}</Text>
             <br />
-            <Text>Department: {profile.department || "Chưa cập nhật"}</Text>
+            <Text>Tên: {profile.supporter.name || "Chưa cập nhật"}</Text>
             <br />
-            <Text>Phone: {profile.phone || "Chưa cập nhật"}</Text>
+            <Text>Số điện thoại: {profile.supporter.phoneNumber || "Chưa cập nhật"}</Text>
           </>
         );
       default:
@@ -82,14 +83,14 @@ export default function ProfilePage() {
   return (
     <Row justify="center" style={{ padding: "50px 16px" }}>
       <Col xs={24} sm={20} md={16} lg={12}>
-        <Card title={`${profile.role.toUpperCase()} Profile`}>
+        <Card>
           <Row gutter={[16, 16]} align="middle">
             <Col>
               <Avatar size={100} icon={roleIcon()} />
             </Col>
             <Col flex="auto">
               <Title level={3}>{profile.email}</Title>
-              <Text strong>Role: </Text>
+              <Text strong>Quyền: </Text>
               <Tag color="blue">{profile.role.toUpperCase()}</Tag>
             </Col>
           </Row>

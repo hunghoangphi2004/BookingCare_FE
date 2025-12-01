@@ -22,7 +22,6 @@ function Prescriptions() {
     const { Title } = Typography;
     const location = useLocation();
 
-    // 🔥 Nhận alert từ trang Create (giống Clinic)
     useEffect(() => {
         if (location.state?.alert) {
             setAlert(location.state.alert);
@@ -53,7 +52,6 @@ function Prescriptions() {
         }
     };
 
-    // --- DELETE ---
     const showDeleteModal = (id) => {
         setSelectedId(id);
         setIsModalOpen(true);
@@ -94,7 +92,6 @@ function Prescriptions() {
         }
     };
 
-    // --- SEND EMAIL ---
     const handleSendEmail = async (id, email) => {
         if (!email) {
             setAlert({
@@ -124,7 +121,6 @@ function Prescriptions() {
         }
     };
 
-    // --- TABLE COLUMNS ---
     const columns = [
         {
             title: "#",

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Alert, Table, Tag, Button } from "antd";
 import { getAllAppointments } from "../../services/appointmentService";
 import { getDoctorById } from "../../services/doctorService";
 import { getPatientById } from "../../services/patientService";
@@ -8,6 +9,7 @@ function SupporterAppointments() {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState(""); // 🌟 State để hiển thị alert thành công
 
   useEffect(() => {
     fetchAppointments();
@@ -16,23 +18,27 @@ function SupporterAppointments() {
   const fetchAppointments = async () => {
     try {
       const res = await getAllAppointments();
-      console.log(res)
       if (res.success) {
-        const appointmentsWithInfo = await Promise.all(
-          res.data.map(async (a) => {
+        const result = await Promise.all(
+          res.data.map(async (a, index) => {
             const doctorRes = await getDoctorById(a.doctorId);
             const patientRes = await getPatientById(a.patientId);
-            console.log(patientRes)
+
             return {
+              key: a._id,
+              index: index + 1,
               ...a,
               doctorName: doctorRes.success ? doctorRes.data.name : a.doctorId,
-              patientName: patientRes.success && patientRes.data?.patient
-                ? `${patientRes.data.patient.firstName} ${patientRes.data.patient.lastName}`
-                : a.patientId,
+              patientName:
+                patientRes.success && patientRes.data?.patient
+                  ? `${patientRes.data.patient.firstName} ${patientRes.data.patient.lastName}`
+                  : a.patientId,
             };
           })
         );
-        setAppointments(appointmentsWithInfo);
+
+        setAppointments(result);
+        setSuccessMessage("Tải danh sách lịch hẹn thành công!"); // 🌟 Thông báo thành công
       } else {
         setError(res.message || "Không lấy được dữ liệu");
       }
@@ -45,69 +51,94 @@ function SupporterAppointments() {
 
   const handleUpdateStatus = async (id, status) => {
     if (!window.confirm(`Bạn có chắc muốn đổi trạng thái thành "${status}"?`)) return;
+
     try {
       const res = await changeStatusAppointment(id, status);
       if (res.success) {
-        alert("Cập nhật trạng thái thành công!");
-        fetchAppointments()
+        setSuccessMessage("Cập nhật trạng thái thành công!");
+        fetchAppointments();
       } else {
-        alert(res.message || "Cập nhật thất bại!");
+        setError(res.message || "Cập nhật thất bại!");
       }
     } catch (err) {
-      alert("Lỗi khi cập nhật trạng thái!");
+      setError("Lỗi khi cập nhật trạng thái!");
     }
-  }
+  };
 
-  if (loading) return <p>Đang tải dữ liệu...</p>;
-  if (error) return <div className="alert alert-danger">{error}</div>;
+  const columns = [
+    { title: "#", dataIndex: "index", width: 60 },
+    { title: "Bác sĩ", dataIndex: "doctorName" },
+    { title: "Bệnh nhân", dataIndex: "patientName" },
+    { title: "Ngày", dataIndex: "dateBooking" },
+    { title: "Thời gian", dataIndex: "timeBooking" },
+    {
+      title: "Trạng thái",
+      dataIndex: "status",
+      render: (status) => {
+        switch (status) {
+          case "pending":
+            return <Tag color="gold">Đang chờ duyệt</Tag>;
+          case "confirmed":
+            return <Tag color="blue">Đã xác nhận</Tag>;
+          case "cancelled":
+            return <Tag color="red">Đã hủy</Tag>;
+          default:
+            return <Tag>Không rõ</Tag>;
+        }
+      },
+    },
+    { title: "Mô tả", dataIndex: "description" },
+    {
+      title: "Hành động",
+      render: (row) =>
+        row.status === "pending" && (
+          <>
+            <Button
+              type="primary"
+              size="small"
+              className="me-2"
+              onClick={() => handleUpdateStatus(row._id, "confirmed")}
+            >
+              Chấp thuận
+            </Button>
+            <Button danger size="small" onClick={() => handleUpdateStatus(row._id, "cancelled")}>
+              Hủy
+            </Button>
+          </>
+        ),
+    },
+  ];
 
   return (
     <div>
       <h2>Quản lý lịch đặt</h2>
-      <table className="table table-striped table-bordered">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Bác sĩ</th>
-            <th>Bệnh nhân</th>
-            <th>Ngày</th>
-            <th>Thời gian</th>
-            <th>Trạng thái</th>
-            <th>Mô tả</th>
-          </tr>
-        </thead>
-        <tbody>
-          {appointments.map((a, idx) => (
-            <tr key={a._id}>
-              <td>{idx + 1}</td>
-              <td>{a.doctorName}</td>
-              <td>{a.patientName}</td>
-              <td>{a.dateBooking}</td>
-              <td>{a.timeBooking}</td>
-              <td>{a.status}</td>
-              <td>{a.description}</td>
-              <td>
-                {a.status === "pending" && (
-                  <>
-                    <button
-                      className="btn btn-success btn-sm me-2"
-                      onClick={() => handleUpdateStatus(a._id, "confirmed")}
-                    >
-                      Chấp thuận
-                    </button>
-                    <button
-                      className="btn btn-danger btn-sm"
-                      onClick={() => handleUpdateStatus(a._id, "cancelled")}
-                    >
-                      Hủy
-                    </button>
-                  </>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+
+      {/* 🌟 Hiển thị thông báo thành công */}
+      {successMessage && (
+        <Alert
+          message="Thành công"
+          description={successMessage}
+          type="success"
+          showIcon
+          closable
+          onClose={() => setSuccessMessage("")}
+          className="mb-3"
+        />
+      )}
+
+      {error && (
+        <Alert
+          message="Lỗi"
+          description={error}
+          type="error"
+          showIcon
+          closable
+          onClose={() => setError("")}
+          className="mb-3"
+        />
+      )}
+
+      <Table columns={columns} dataSource={appointments} loading={loading} bordered pagination={{ pageSize: 8 }} />
     </div>
   );
 }

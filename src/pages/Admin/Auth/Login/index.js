@@ -37,7 +37,7 @@ function AdminLogin() {
                 const role = data.result.role;
                 console.log(role)
                 if (role == "admin") navigate("/admin");
-                else if (role == "supporter") navigate("/admin/supporter");
+                else if (role == "supporter") navigate("/admin/supporter/appointments");
                 else if (role == "doctor") navigate("/admin/doctor/appointments");
                 else navigate("/"); 
             }
@@ -53,7 +53,7 @@ function AdminLogin() {
     return (
         <div className="container vh-100 d-flex align-items-center justify-content-center bg-light">
             <div className="card shadow-lg p-4" style={{ maxWidth: "400px", width: "100%" }}>
-                <h2 className="text-center mb-3">Admin Login</h2>
+                <h2 className="text-center mb-3">Đăng nhập</h2>
                 {error && <div className="alert alert-danger">{error}</div>}
                 <form onSubmit={handleSubmit}>
                     <div className="mb-3">

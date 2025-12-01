@@ -13,14 +13,14 @@ import {
 
 export const adminMenu = [
   { path: "/admin/dashboard", label: "Tổng quan", icon: <HomeOutlined /> },
-  { path: "/admin/schedules", label: "Tạo lịch khám", icon: <CalendarOutlined /> },
+  // { path: "/admin/schedules", label: "Tạo lịch khám", icon: <CalendarOutlined /> },
   { path: "/admin/doctors", label: "Bác sĩ", icon: <UserOutlined /> },
   { path: "/admin/specializations", label: "Chuyên khoa", icon: <ProfileOutlined /> },
   { path: "/admin/clinics", label: "Phòng khám", icon: <HddOutlined /> },
   { path: "/admin/patients", label: "Bệnh nhân", icon: <TeamOutlined /> },
   { path: "/admin/supporters", label: "Hỗ trợ viên", icon: <UserOutlined /> },
   { path: "/admin/medicines", label: "Thuốc", icon: <MedicineBoxOutlined /> },
-  { path: "/admin/prescriptions", label: "Toa thuốc", icon: <FileTextOutlined /> },
+  // { path: "/admin/prescriptions", label: "Toa thuốc", icon: <FileTextOutlined /> },
   { path: "/admin/families", label: "Gia đình", icon: <TeamOutlined /> },
 ];
 
@@ -33,8 +33,5 @@ export const doctorMenu = [
 ];
 
 export const supporterMenu = [
-  { path: "/admin/supporter/dashboard", label: "Tổng quan", icon: <HomeOutlined /> },
   { path: "/admin/supporter/appointments", label: "Quản lý lịch đặt", icon: <CalendarOutlined /> },
-  { path: "/admin/supporter/customers", label: "Quản lý Khách hàng", icon: <TeamOutlined /> },
-  { path: "/admin/supporter/chat", label: "Chat hỗ trợ", icon: <MessageOutlined /> },
 ];

@@ -207,7 +207,6 @@ function Doctors() {
             { title: 'Hình ảnh', dataIndex: 'thumbnail', render: src => <img src={src} alt="thumb" style={{ width: 80, borderRadius: 8 }} /> },
             { title: 'Bác sĩ', dataIndex: 'name' },
             { title: 'Email', render: r => r.userId?.email || '—' },
-            { title: 'Slug', dataIndex: 'slug' },
             { title: 'Chuyên khoa', render: r => r.specializationId?.name || '—' },
             { title: 'Phòng khám', render: r => r.clinicId?.name || '—' },
             { title: 'SĐT', dataIndex: 'phoneNumber' },
